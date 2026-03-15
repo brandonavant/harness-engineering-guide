@@ -1,0 +1,164 @@
+# Beacon API Contract
+#
+# This is the authoritative specification for all API endpoints. Both backend and
+# frontend agents implement against this file. Neither modifies it unilaterally.
+#
+# [CUSTOMIZE] Replace Beacon-specific content with your application's entities,
+# endpoints, and schemas. Keep the structure (info, servers, paths, components).
+
+openapi: "3.1.0"
+
+info:
+  title: Beacon API
+  version: "0.1.0"
+  description: |
+    API contract for Beacon, a task management SaaS for small engineering teams.
+    All endpoints require session cookie authentication unless marked otherwise.
+
+servers:
+  - url: http://localhost:8000
+    description: Local development (FastAPI backend)
+  - url: http://localhost:4010
+    description: Mock server (Prism)
+
+tags:
+  - name: System
+    description: Health and status endpoints
+  - name: Tasks
+    description: Task management operations
+
+paths:
+  /api/health:
+    get:
+      operationId: getHealth
+      tags: [System]
+      summary: Health check
+      description: Returns service status. No authentication required.
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, version]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+                    example: ok
+                  version:
+                    type: string
+                    example: "0.1.0"
+
+  /api/tasks:
+    get:
+      operationId: listTasks
+      tags: [Tasks]
+      summary: List tasks for the authenticated user
+      description: Returns all tasks in the user's active workspace, ordered by creation date descending.
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [open, in_progress, done]
+          description: Filter by task status
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+          description: Maximum number of tasks to return
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: Number of tasks to skip for pagination
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, total]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Task"
+                  total:
+                    type: integer
+                    description: Total number of tasks matching the filter
+                    example: 42
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  schemas:
+    Task:
+      type: object
+      required: [id, title, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: "Implement user authentication"
+        description:
+          type: string
+          nullable: true
+          example: "Add session-based auth using Better Auth library"
+        status:
+          type: string
+          enum: [open, in_progress, done]
+          example: "open"
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          default: medium
+          example: "high"
+        assignee_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: session
+      description: Session cookie set by the auth provider after login.
+
+  responses:
+    Unauthorized:
+      description: Authentication required. Session cookie is missing or invalid.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [detail]
+            properties:
+              detail:
+                type: string
+                example: "Not authenticated"
