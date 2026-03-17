@@ -182,7 +182,7 @@ Every technology choice that has been decided. Be specific about versions when i
 
 The agent needs to know how to run things. If these are missing, the agent will guess, and it will often guess wrong.
 
-```markdown
+````markdown
 ## Commands
 
 ```bash
@@ -200,7 +200,7 @@ cd apps/frontend && npm run dev
 cd apps/backend && ruff check .
 cd apps/frontend && npx tsc --noEmit
 ```
-```
+````
 
 #### 4. Pointers to Docs (3-5 lines)
 
