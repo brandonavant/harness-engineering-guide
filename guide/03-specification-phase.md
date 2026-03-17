@@ -614,4 +614,4 @@ If a decision point arises that the existing context does not resolve -- for exa
 
 ---
 
-Next: Chapter 04 -- Configuring the Claude Code Harness *(coming soon)*
+Next: [Chapter 04 -- Context Architecture: The Progressive Disclosure Hierarchy](04-context-architecture.md)

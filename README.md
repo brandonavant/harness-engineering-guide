@@ -58,31 +58,39 @@ implement against without ambiguity.
 
 ### Part 3: Harness
 
-**Chapter 04 -- Configuring the Claude Code Harness** *(coming soon)*
-Deep dive into CLAUDE.md structure, .claude/rules/, custom skills, hooks (pre/post-commit, build verification), and the
-agent instruction pattern.
+**[Chapter 04 -- Context Architecture: The Progressive Disclosure Hierarchy](guide/04-context-architecture.md)**
+The five-tier context hierarchy, how to structure each tier, and the golden rule: never load everything at once.
 
-**Chapter 05 -- Multi-Agent Coordination** *(coming soon)*
-Territory boundaries, shared contracts, worktree isolation, state files, and the integration gate pattern.
+**[Chapter 05 -- Agent Orchestration: From Single Session to Teams](guide/05-agent-orchestration.md)**
+When and how to scale from a single session to multi-agent coordination: territory boundaries, shared contracts,
+worktree isolation, and integration gates.
+
+**[Chapter 06 -- Design Intent Preservation: The Anti-Slop System](guide/06-design-intent.md)**
+A five-layer defense system that prevents generic, "vibe-coded" output and makes the agent's path of least resistance
+match your brand's requirements.
+
+**[Chapter 07 -- Quality Gates: Verification, Enforcement, and Integration Testing](guide/07-quality-gates.md)**
+The verification hierarchy from automatic hooks to integration smoke tests. Linters, type checkers, tests, and the
+feedback loops that turn plausible code into reliable code.
 
 ### Part 4: Build
 
-**Chapter 06 -- Implementation Phases** *(coming soon)*
-Phase planning, the build-test-verify cycle, mock-first development, managing agent context across long sessions, and
-when to start a new conversation.
+**[Chapter 08 -- Implementation: The Human-Agent Loop](guide/08-implementation.md)**
+The build rhythm: decompose work into phases, execute through a disciplined loop, verify integration at every boundary,
+and build skills reactively as gaps emerge.
 
-**Chapter 07 -- Quality Gates and Integration Testing** *(coming soon)*
-Smoke tests, contract validation, visual verification, and the principle that agent tests pass even when real
-integration is broken.
+**[Chapter 09 -- CI/CD and Deployment: Pipelines for Agent-Generated Code](guide/09-ci-cd-and-deployment.md)**
+CI/CD pipeline design, release automation, deployment patterns, and the boundary between what the agent writes and what
+the human executes.
 
 ### Part 5: Sustain
 
-**Chapter 08 -- Feedback Loops and Iterative Improvement** *(coming soon)*
-Turning mistakes into permanent fixes via CLAUDE.md updates, new rules, and refined skills. Memory files,
-lessons-learned patterns, and context pruning.
+**[Chapter 10 -- Entropy Management: Fighting Drift in Agent-Generated Code](guide/10-entropy-management.md)**
+Practices that prevent codebase decay: session hygiene, documentation maintenance, and active intervention against
+pattern drift.
 
-**Chapter 09 -- CI/CD and Deployment** *(coming soon)*
-Automating the pipeline: CI on PR, release on merge, container builds, auto-deployment, and production smoke tests.
+**[Chapter 11 -- Failure Modes: Common Mistakes and How to Avoid Them](guide/11-failure-modes.md)**
+A catalog of failure modes ordered by project phase — what each looks like, why it happens, and how to fix it.
 
 ## Quick Start
 
