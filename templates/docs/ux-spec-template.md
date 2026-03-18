@@ -69,6 +69,11 @@ status name and a count of tasks in that status.
 - Priority dropdown (default: all priorities).
 - Filters apply immediately. URL query params update to reflect active filters.
 
+**States:**
+- **Loading:** Skeleton columns matching board layout, 3 placeholder cards per column.
+- **Empty (no tasks):** Centered message with icon and "Create a task" action (see Section 3).
+- **Error (load failure):** Inline error banner above columns with retry button.
+
 ### 2.2 List View
 
 **URL:** `/workspace/:id/list`
@@ -86,6 +91,11 @@ project, created date.
 
 **Pagination:** 50 tasks per page. "Load more" button at bottom (not numbered pages).
 
+**States:**
+- **Loading:** Skeleton table rows matching column layout, 5 placeholder rows.
+- **Empty (no tasks):** Full-width centered message with "Create a task" action (see Section 3).
+- **Error (load failure):** Inline error banner above table with retry button.
+
 ### 2.3 Task Detail Panel
 
 **URL:** No URL change (panel overlays current view).
@@ -100,6 +110,11 @@ project, created date.
 - **Activity log:** Shows status changes and assignments with timestamps.
 
 **Close behavior:** Click X, press Escape, or click outside the panel.
+
+**States:**
+- **Loading:** Skeleton blocks matching section layout (title bar, metadata bar, description area).
+- **Not found:** "This task no longer exists" message with "Go back" action.
+- **Error (save failure):** Toast notification with retry; field reverts to previous value.
 
 ## 3. Interaction Patterns
 
@@ -138,16 +153,29 @@ project, created date.
 
 Empty states always include a clear next action. Never show just "No data."
 
-## 4. Accessibility Requirements
+## 4. Accessibility
 
-- **WCAG 2.1 AA** compliance required.
-- All text meets 4.5:1 contrast ratio (3:1 for large text).
-- All interactive elements are keyboard-accessible.
-- Focus indicators are clearly visible (not browser default -- use a custom ring).
-- Screen reader support: all images have alt text, all icons have aria-labels,
-  dynamic content updates use aria-live regions.
-- Drag-and-drop has a keyboard alternative (select card, use dropdown to change status).
-- No information conveyed by color alone (priority uses both color and label).
+<!-- [CUSTOMIZE] Choose your WCAG target (version and conformance level) and state it here.
+The canonical WCAG specification (https://www.w3.org/TR/WCAG22/) is the authoritative
+reference for success criteria -- this section should not attempt to enumerate them.
+Instead, state your target, reference the spec, and call out product-specific accessibility
+risks that agents are likely to miss. If you choose to omit accessibility coverage, document
+the justification explicitly. -->
+
+**Target:** WCAG **[CUSTOMIZE: version, e.g., 2.2]** Level **[CUSTOMIZE: conformance level,
+e.g., AA]**. All success criteria for the chosen level apply. Reference the canonical WCAG
+specification for the full list of requirements rather than maintaining a separate enumeration
+here.
+
+**Product-specific accessibility notes (Beacon):**
+- Drag-and-drop on the board view must have a keyboard alternative (select card, use
+  dropdown or keyboard shortcut to change status).
+- Priority indicators use color-coded borders; priority must also be conveyed through a
+  text label or icon so that no information is communicated by color alone.
+- Focus indicators must be custom (not browser default) and clearly visible against both
+  light and dark surface colors used in the application.
+- Dynamic content updates (optimistic status changes, inline saves, toast notifications)
+  must use appropriate ARIA live regions.
 
 ## 5. Responsive Behavior
 

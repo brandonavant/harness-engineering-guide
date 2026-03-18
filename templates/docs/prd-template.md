@@ -36,8 +36,9 @@ Opinionated defaults over infinite customization.
 ## 2. Target Persona
 
 <!-- [CUSTOMIZE] Describe the primary user. Be specific: role, team size, pain points,
-existing workflow, what they care about, what they do NOT care about. A persona that
-could describe anyone describes no one. -->
+existing workflow, what they care about, what they do NOT care about. Include experience
+breakers -- the things that make this persona abandon a tool. A persona that could describe
+anyone describes no one. -->
 
 **Primary persona: The Tech Lead**
 
@@ -48,6 +49,9 @@ could describe anyone describes no one. -->
 - Values speed and keyboard navigation over visual richness.
 - Cares about: task assignment, status tracking, search, and a clean board view.
 - Does NOT care about: Gantt charts, resource planning, time tracking, invoicing.
+- **Experience breakers:** Mandatory setup wizards longer than 2 minutes, forced onboarding
+  tours that cannot be skipped, any workflow that requires more clicks than the spreadsheet
+  it replaces.
 
 ## 3. Feature Requirements
 
