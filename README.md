@@ -92,6 +92,15 @@ pattern drift.
 **[Chapter 11 -- Failure Modes: Common Mistakes and How to Avoid Them](guide/11-failure-modes.md)**
 A catalog of failure modes ordered by project phase — what each looks like, why it happens, and how to fix it.
 
+## Checklists
+
+Standalone checklists for key moments in the project lifecycle:
+
+- [Project Kickoff](checklists/project-kickoff.md) — Pre-flight checks before starting a new project
+- [Phase Completion](checklists/phase-completion.md) — Verification steps at the end of each implementation phase
+- [Context Reset](checklists/context-reset.md) — What to do when starting a fresh agent session mid-project
+- [Pre-Merge](checklists/pre-merge.md) — Final checks before merging agent-generated code
+
 ## Quick Start
 
 **Option A: Read the guide from the beginning.**

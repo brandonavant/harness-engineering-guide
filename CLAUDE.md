@@ -43,13 +43,61 @@ Brand Identity. Each document feeds the next.
 - Cross-references between chapters use relative Markdown links (`[Chapter 02](02-project-bootstrap.md)`)
 - Chapter filenames follow `NN-slug.md` pattern (e.g., `01-foundations.md`)
 
+## Scripting Conventions
+
+- All scripts in this repo use **Python 3** (never shell/bash). Use `#!/usr/bin/env python3` shebangs.
+- Use **Google-style docstrings** for modules, classes, and functions. Include a summary line, then
+  `Args:`, `Returns:`/`Yields:`, and `Raises:` sections as applicable. Omit sections that would be empty.
+- Use **type hints** on function signatures and where they aid readability.
+
+## Research Before Implementing
+
+This guide teaches Claude Code features (rules, skills, hooks, CLAUDE.md). Before creating or modifying any harness
+file, verify the current format against Anthropic's official documentation — do not rely on training knowledge, MCP
+index tools, or the guide's own examples (which may be outdated).
+
+**Authoritative source:** Fetch directly from `https://code.claude.com/docs/en/` using WebFetch. Key pages:
+
+- **Memory & rules**: `https://code.claude.com/docs/en/memory` (CLAUDE.md format, `.claude/rules/` frontmatter)
+- **Skills**: `https://code.claude.com/docs/en/skills` (SKILL.md format, directory structure, frontmatter)
+- **Hooks**: `https://code.claude.com/docs/en/hooks` (hook types, settings.json schema, allowed fields)
+- **Settings**: `https://code.claude.com/docs/en/settings` (settings.json structure, permissions)
+
+Do NOT use MCP index tools or training knowledge as the primary source for Claude Code feature formats. These sources
+may return results from internal plugins, third-party examples, or outdated training data that use different
+conventions than the official user-facing documentation.
+
 ## When Editing Content
 
 - The guide is opinionated and prescriptive — maintain that voice. Avoid hedging language ("you might consider") in
   favor of direct statements ("do this").
-- Chapters 04-11 are complete. Chapters 01-03 were the initial release. The README's "coming soon" markers for chapters
-  04-11 are outdated.
+- Chapters 04-11 are complete. Chapters 01-03 were the initial release.
 - The case study is currently a placeholder (WIP). It will be populated after the guide is validated on a real
   production application.
 - Templates in `templates/` use a fictional "Beacon" task management SaaS as the example project. Guide chapters use a
   fictional "RecipeVault" recipe app.
+
+## Rules and Skills
+
+This repo uses its own harness features. Rules autoload by path; skills are invoked on demand.
+
+- **Rules** (`.claude/rules/`):
+    - `guide-chapter.md` — Voice enforcement, structure requirements, cross-reference protocol for `guide/**`
+    - `template-file.md` — Beacon examples, CUSTOMIZE markers, rename protocol for `templates/**`
+    - `root-files.md` — Title sync, line limits, canonical term consistency for `README.md` and `CLAUDE.md`
+- **Skills** (`.claude/skills/`):
+    - `cross-reference-check/` — Validates all cross-references repo-wide (titles, paths, terms, links)
+    - `edit-chapter/` — Guided before/during/after workflow for safe chapter editing
+
+## Cross-Reference Registry
+
+Sources of truth and their dependents. Check dependents after any change to the source.
+
+| Source of Truth                         | Dependents to Check                                                 |
+|-----------------------------------------|---------------------------------------------------------------------|
+| Chapter H1 titles (`guide/*.md` line 1) | `README.md` lines 45-93, `CLAUDE.md`, "Next:" link in prior chapter |
+| Template paths (referenced in chapters) | Actual files in `templates/`                                        |
+| "five-tier context hierarchy" (Ch 04)   | `CLAUDE.md`, `README.md`                                            |
+| "document cascade" (Ch 03)              | `CLAUDE.md`, `README.md`, `templates/docs/README.md`                |
+| Template filenames                      | Chapter metadata lines, template `README.md` files                  |
+| Checklist filenames (`checklists/`)     | `README.md`                                                         |
