@@ -40,7 +40,7 @@ valuable and most constrained piece of context you will write.
 - Project identity (one sentence: what this is)
 - Tech stack summary (table format, scannable)
 - Critical rules that apply to ALL work (branching policy, commit conventions, territory boundaries)
-- Pointers to deeper context ("Read `.agent-instructions/backend-agent.md` before starting backend work")
+- Pointers to deeper context ("Read `docs/architecture.md` before starting backend work")
 - Local development commands (docker compose, test runners, migration commands)
 - Mandatory skill invocations ("You MUST invoke `/design-check` before any frontend work")
 
@@ -49,7 +49,7 @@ valuable and most constrained piece of context you will write.
 - Architecture decisions (put in `docs/architecture.md`, reference it)
 - Detailed API contracts (put in `contracts/openapi.yaml`, reference it)
 - Historical debugging notes (put in memory or docs)
-- Phase-by-phase task lists (put in `.agent-instructions/`)
+- Phase-by-phase task lists (put in subagent definitions at `.claude/agents/`)
 - Brand guidelines (put in `docs/brand-identity.md`, load via skill)
 
 **The litmus test:** For every line in CLAUDE.md, ask: "Would removing this line cause Claude to make a mistake in the
@@ -68,10 +68,10 @@ valuable and most constrained piece of context you will write.
 | Backend  | FastAPI, Python 3.12, SQLAlchemy |
 | Database | PostgreSQL 16                    |
 
-## Agent Identification
+## Subagent Definitions
 
-- Backend agent: Read `.agent-instructions/backend-agent.md` first.
-- Frontend agent: Read `.agent-instructions/frontend-agent.md` first.
+- Backend subagent: `.claude/agents/backend-agent.md` — autoloaded on invocation.
+- Frontend subagent: `.claude/agents/frontend-agent.md` — autoloaded on invocation.
 
 ## Mandatory Skills
 
@@ -237,7 +237,7 @@ description: Validates implementation against the OpenAPI contract. Invoke after
     - Error responses match documented error shapes
 3. If there is a deviation:
     - Do NOT modify the contract.
-    - Document the deviation in your `.agent-state/*.md` under "Contract Deviations."
+    - Document the deviation in your agent memory under "Contract Deviations."
     - Flag it for human review.
 
 ## Checklist
@@ -268,12 +268,11 @@ This tier includes everything the agent can find and read but that does not load
 
 - `docs/` — Architecture documents, design specs, brand guidelines
 - `contracts/` — API specs, database schemas, interface definitions
-- `.agent-instructions/` — Agent-specific instructions, phase lists
+- `.claude/agents/` — Custom subagent definitions (autoloaded on invocation)
 - Source code itself — the agent reads code as needed via Glob, Grep, and Read
 
-**The agent discovers Tier 4 context through Tier 1 pointers.** CLAUDE.md says "Read
-`.agent-instructions/backend-agent.md` before starting backend work." The agent follows the pointer. This is why
-CLAUDE.md is a map, not a dump.
+**The agent discovers Tier 4 context through Tier 1 pointers.** CLAUDE.md says "Read `docs/architecture.md`
+before starting backend work." The agent follows the pointer. This is why CLAUDE.md is a map, not a dump.
 
 **Good Tier 4 documents are self-contained.** An architecture doc should make sense without reading CLAUDE.md. A brand
 identity doc should contain everything needed for design enforcement. This independence means the agent can load exactly
@@ -289,12 +288,13 @@ docs/
   ux-spec.md             # UX flows, wireframes, interaction specs
 contracts/
   openapi.yaml           # API contract (source of truth)
-.agent-instructions/
-  backend-agent.md       # Backend agent scope, rules, phases
-  frontend-agent.md      # Frontend agent scope, rules, phases
-.agent-state/
-  backend-agent.md       # Backend agent progress, test results
-  frontend-agent.md      # Frontend agent progress, deviations
+.claude/
+  agents/
+    backend-agent.md     # Backend subagent definition (scope, rules, phases)
+    frontend-agent.md    # Frontend subagent definition (scope, rules, phases)
+  agent-memory/          # Subagent persistent memory (auto-created)
+  rules/
+  skills/
 ```
 
 ---
@@ -382,4 +382,4 @@ Context architecture is the foundation. Every subsequent chapter assumes you hav
 
 ---
 
-Next: [Chapter 05 -- Agent Orchestration: From Single Session to Teams](05-agent-orchestration.md)
+Next: [Chapter 05 -- Agent Orchestration: Sessions, Subagents, and Worktrees](05-agent-orchestration.md)

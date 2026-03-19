@@ -14,7 +14,7 @@ The repo contains no application code, no build system, and no tests. It is orga
 
 - `guide/` — The 11-chapter guide, ordered by lifecycle phase (Foundations → Specification → Harness → Build → Sustain)
 - `templates/` — Starter files users copy into their projects: CLAUDE.md template, doc templates (PRD, architecture, UX
-  spec, brand identity), OpenAPI stub, skill/rule/hook examples, CI workflow, agent instruction/state templates
+  spec, brand identity), OpenAPI stub, skill/rule/hook examples, CI workflow, subagent definition templates
 - `case-study/` — Placeholder for a case study (WIP, will be populated after guide validation)
 - `checklists/` — Standalone checklists for project kickoff, phase completion, context reset, and pre-merge
 - `README.md` — Entry point with guide structure, quick start options, and sources
@@ -24,9 +24,9 @@ The repo contains no application code, no build system, and no tests. It is orga
 The guide teaches a **five-tier context hierarchy** (Chapter 4) that is central to all recommendations:
 
 1. **CLAUDE.md** — Always loaded, under 200 lines, serves as a map not an encyclopedia
-2. **Path-scoped rules** (`.claude/rules/`) — Auto-loaded on file pattern match
+2. **Path-scoped rules** (`.claude/rules/`) — Autoloaded on file pattern match
 3. **Skills** (`.claude/skills/`) — Loaded on demand for specific work types
-4. **Discoverable docs** (`docs/`, `contracts/`, `.agent-instructions/`) — Read through Tier 1 pointers
+4. **Discoverable docs** (`docs/`, `contracts/`) — Read through Tier 1 pointers
 5. **Memory** — Persistent across sessions for institutional knowledge
 
 The guide follows a **document cascade** (Chapter 3): Interview Summary → PRD → Architecture → UX Spec → API Contract →

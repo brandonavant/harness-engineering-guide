@@ -10,11 +10,11 @@ are usually wrong.
 
 ## Document Header
 
-| Field | Value |
-|-------|-------|
-| Version | v1.0 |
-| Date | 2025-01-15 |
-| Author | [CUSTOMIZE] |
+| Field          | Value           |
+|----------------|-----------------|
+| Version        | v1.0            |
+| Date           | 2025-01-15      |
+| Author         | [CUSTOMIZE]     |
 | Change Summary | Initial version |
 
 ---
@@ -57,22 +57,28 @@ anyone describes no one. -->
 
 <!-- [CUSTOMIZE] List every feature with a unique ID, description, and acceptance criteria.
 The agent implements against these -- vague features produce vague implementations.
-Number them so agents can reference specific requirements in their state files. -->
+Number them so agents can reference specific requirements in their agent memory. -->
 
 ### F-01: Workspace Management
+
 Users can create and manage workspaces. Each workspace is an isolated tenant.
+
 - **AC-01:** User can create a workspace with a name (3-50 characters).
 - **AC-02:** User can invite members by email.
 - **AC-03:** Workspace data is fully isolated -- no cross-workspace queries.
 
 ### F-02: Project Organization
+
 Tasks are organized into projects within a workspace.
+
 - **AC-01:** User can create a project with a name and optional description.
 - **AC-02:** Projects belong to exactly one workspace.
 - **AC-03:** User can archive a project (soft delete -- tasks preserved but hidden from default views).
 
 ### F-03: Task CRUD
+
 Users can create, read, update, and delete tasks.
+
 - **AC-01:** Task requires a title (1-200 characters). Description is optional (up to 5000 characters).
 - **AC-02:** Tasks have a status: open, in_progress, done.
 - **AC-03:** Tasks have a priority: low, medium (default), high, urgent.
@@ -80,25 +86,33 @@ Users can create, read, update, and delete tasks.
 - **AC-05:** Deleting a task is a soft delete (recoverable for 30 days).
 
 ### F-04: Board View
+
 Kanban-style board showing tasks grouped by status.
+
 - **AC-01:** Columns: Open, In Progress, Done.
 - **AC-02:** Tasks can be dragged between columns to change status.
 - **AC-03:** Board respects active filters (project, assignee, priority).
 
 ### F-05: List View
+
 Table-style view showing tasks in a sortable, filterable list.
+
 - **AC-01:** Columns: title, status, priority, assignee, created date.
 - **AC-02:** Sortable by any column.
 - **AC-03:** Filterable by status, priority, assignee, project.
 
 ### F-06: Search
+
 Full-text search across task titles and descriptions.
+
 - **AC-01:** Search results appear as user types (debounced, 300ms).
 - **AC-02:** Results show task title, project, status, and a snippet of matching description text.
 - **AC-03:** Search is scoped to the active workspace.
 
 ### F-07: Authentication
+
 Session-based authentication using Better Auth.
+
 - **AC-01:** Users register with email and password.
 - **AC-02:** Users log in and receive a session cookie.
 - **AC-03:** All API endpoints (except health) require a valid session.
@@ -130,6 +144,7 @@ content, language, themes. Be explicit about legal or compliance requirements. -
 features that sound reasonable but are out of scope. -->
 
 The following are explicitly NOT in scope for MVP:
+
 - Time tracking or time estimation on tasks.
 - Gantt charts or timeline views.
 - Automation rules (e.g., "when status changes to Done, notify assignee").

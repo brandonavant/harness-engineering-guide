@@ -18,8 +18,8 @@ Neither agent modifies it unilaterally.
 - **Minor-level changes** (breaking): renamed fields, removed endpoints, changed required
   fields, altered response structure. Bump the minor version. All agents must update
   their implementations.
-- **Proposing a change:** Record the proposed change in your `.agent-state/*.md` file
-  under "Contract Deviations." The team lead reviews and applies changes to the spec.
+- **Proposing a change:** Record the proposed change in your agent memory under
+  "Contract Deviations." The team lead reviews and applies changes to the spec.
 
 ## Usage Commands
 
