@@ -1,4 +1,4 @@
-# Chapter 4: Context Architecture — The Progressive Disclosure Hierarchy
+# Chapter 04 -- Context Architecture: The Progressive Disclosure Hierarchy
 
 > **Part 3: HARNESS** | Maps to templates: `templates/CLAUDE.md`, `templates/.claude/rules/example-backend.md`
 

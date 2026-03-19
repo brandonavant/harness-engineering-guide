@@ -1,4 +1,4 @@
-# Chapter 6: Design Intent Preservation — The Anti-Slop System
+# Chapter 06 -- Design Intent Preservation: The Anti-Slop System
 
 > **Part 3: HARNESS** | Maps to templates: `templates/.claude/skills/design-enforcement/SKILL.md`, `templates/docs/brand-identity-template.md`
 

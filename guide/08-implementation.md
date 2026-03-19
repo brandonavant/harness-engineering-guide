@@ -1,4 +1,4 @@
-# Chapter 8: Implementation — The Human-Agent Loop
+# Chapter 08 -- Implementation: The Human-Agent Loop
 
 > **Part 4: BUILD** | Templates: `.agent-instructions/*.md`, `.agent-state/*.md`, `scripts/integration-smoke-test.sh`
 

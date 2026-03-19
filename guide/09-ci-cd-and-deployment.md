@@ -1,4 +1,4 @@
-# Chapter 9: CI/CD and Deployment — Pipelines for Agent-Generated Code
+# Chapter 09 -- CI/CD and Deployment: Pipelines for Agent-Generated Code
 
 > **Part 4: BUILD** | Templates: `templates/.github/workflows/ci.yml`
 

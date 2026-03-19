@@ -1,4 +1,4 @@
-# Chapter 11: Failure Modes — Common Mistakes and How to Avoid Them
+# Chapter 11 -- Failure Modes: Common Mistakes and How to Avoid Them
 
 > **Part 5: SUSTAIN** | Reference chapter
 

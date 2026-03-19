@@ -1,4 +1,4 @@
-# Chapter 7: Quality Gates — Verification, Enforcement, and Integration Testing
+# Chapter 07 -- Quality Gates: Verification, Enforcement, and Integration Testing
 
 > **Part 3: HARNESS** | Maps to templates: `templates/.claude/hooks/README.md`, `templates/scripts/integration-smoke-test.sh`, `templates/.claude/skills/example-checklist.md`
 

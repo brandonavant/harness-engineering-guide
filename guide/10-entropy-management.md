@@ -1,4 +1,4 @@
-# Chapter 10: Entropy Management — Fighting Drift in Agent-Generated Code
+# Chapter 10 -- Entropy Management: Fighting Drift in Agent-Generated Code
 
 > **Part 5: SUSTAIN** | Templates: `CLAUDE.md`, `.claude/rules/`, `skills/`
 
