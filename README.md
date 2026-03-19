@@ -103,14 +103,17 @@ Standalone checklists for key moments in the project lifecycle:
 
 ## Quick Start
 
-**Option A: Read the guide from the beginning.**
+**Option A: Follow the cheatsheet.**
+[`CHEATSHEET.md`](CHEATSHEET.md) is a copy-paste-ready quick reference with prompts for every lifecycle phase.
+
+**Option B: Read the guide from the beginning.**
 Start with [Chapter 01](guide/01-foundations.md) and follow the sequence.
 
-**Option B: Copy the templates into an existing project.**
+**Option C: Copy the templates into an existing project.**
 Browse the [`templates/`](templates/) directory for starter files you can drop into your repo: CLAUDE.md templates, doc
 templates, OpenAPI stubs, and skill definitions.
 
-**Option C: Jump to a specific topic.**
+**Option D: Jump to a specific topic.**
 Each chapter is self-contained enough to read independently, though the concepts build on each other.
 
 ## Sources and Further Reading
