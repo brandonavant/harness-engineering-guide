@@ -13,6 +13,8 @@ from pathlib import Path
 
 REPO_ROOT: Path = Path(__file__).resolve().parents[4]
 LINK_PATTERN: re.Pattern[str] = re.compile(r"\[([^]]+)]\(([^)]+\.md)\)")
+NEXT_PATTERN: re.Pattern[str] = re.compile(r"^Next: \[([^]]+)]\(([^)]+)\)\s*$", re.MULTILINE)
+FINAL_CHAPTER: str = "11-failure-modes.md"
 CANONICAL_TERMS: dict[str, list[Path]] = {
     "five-tier context hierarchy": [
         REPO_ROOT / "CLAUDE.md",
@@ -163,6 +165,40 @@ def check_canonical_terms(issues: list[str]) -> None:
                 )
 
 
+def check_next_footers(issues: list[str]) -> None:
+    """Verify every non-final chapter has a Next: footer linking to an existing file.
+
+    Checks that each guide chapter except ``11-failure-modes.md`` contains a
+    ``Next:`` footer link and that the linked file exists on disk.
+
+    Args:
+        issues: Accumulator list for pipe-delimited issue strings.
+    """
+    guide_dir = REPO_ROOT / "guide"
+    for chapter in sorted(guide_dir.glob("*.md")):
+        if chapter.name == FINAL_CHAPTER:
+            continue
+        content = chapter.read_text()
+        rel = chapter.relative_to(REPO_ROOT)
+        match = NEXT_PATTERN.search(content)
+        if not match:
+            issues.append(
+                f"MISSING_NEXT_FOOTER|{rel}|0"
+                f"|Chapter is missing a 'Next:' footer section"
+                f"|Add '---\\n\\nNext: [Chapter NN -- Title](NN-slug.md)' at end of file"
+            )
+            continue
+        linked_file = match.group(2)
+        target = (chapter.parent / linked_file).resolve()
+        if not target.is_file():
+            lineno = content[: match.start()].count("\n") + 1
+            issues.append(
+                f"BROKEN_NEXT_LINK|{rel}|{lineno}"
+                f"|Next: link to {linked_file} does not resolve"
+                f"|Verify path or update link"
+            )
+
+
 def main() -> None:
     """Run all cross-reference checks and print results.
 
@@ -177,6 +213,7 @@ def main() -> None:
     check_template_paths(issues)
     check_checklist_references(issues)
     check_canonical_terms(issues)
+    check_next_footers(issues)
 
     for issue in issues:
         print(issue)

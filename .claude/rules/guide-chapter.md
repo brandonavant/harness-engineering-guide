@@ -45,6 +45,20 @@ After changing template references or metadata:
 - Cross-references use relative Markdown links: `[Chapter 02](02-project-bootstrap.md)`
 - Chapter filenames follow `NN-slug.md` (e.g., `01-foundations.md`)
 
+## Chapter Footer
+
+Every chapter except the final one (`11-failure-modes.md`) **must** end with a `Next:` footer in this exact format:
+
+```markdown
+---
+
+Next: [Chapter NN -- Title](NN-slug.md)
+```
+
+- The horizontal rule (`---`) must immediately precede the `Next:` line, separated by blank lines
+- The linked path must be a valid relative Markdown link to the immediately following chapter
+- `11-failure-modes.md` intentionally has no `Next:` footer
+
 ## Checklists
 
 The `checklists/` directory contains standalone checklists (project-kickoff, phase-completion, context-reset,

@@ -379,3 +379,7 @@ relevant, skills load only when invoked, documents are discovered through pointe
 without repetition.
 
 Context architecture is the foundation. Every subsequent chapter assumes you have this hierarchy in place.
+
+---
+
+Next: [Chapter 05 -- Agent Orchestration: From Single Session to Teams](05-agent-orchestration.md)

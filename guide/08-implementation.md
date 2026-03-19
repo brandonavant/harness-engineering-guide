@@ -574,3 +574,7 @@ These are the implementation mistakes we have seen repeatedly. Awareness is the 
 **Micromanaging implementation.** The opposite failure. Telling the agent exactly which lines to write defeats the purpose. Give scope and constraints, then let the agent work. Review the output, not the process.
 
 **Skipping the plan step.** Jumping straight to "implement this phase" without reviewing the agent's approach. The five minutes you spend reviewing the plan saves the hours you would spend correcting a wrong approach mid-implementation.
+
+---
+
+Next: [Chapter 09 -- CI/CD and Deployment: Pipelines for Agent-Generated Code](09-ci-cd-and-deployment.md)

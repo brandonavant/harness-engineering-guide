@@ -42,6 +42,17 @@ Check each condition and take action if true:
 1. Search all `.md` files for the old term
 2. Update every occurrence to match the new term
 
+**Always (every edit):**
+
+1. Verify the chapter ends with a `Next:` footer linking to the correct successor chapter, unless the file is
+   `11-failure-modes.md`
+2. The footer must follow this format:
+   ```markdown
+   ---
+
+   Next: [Chapter NN -- Title](NN-slug.md)
+   ```
+
 **If any structural change was made** (title, file references, canonical terms):
 
 1. Run the `cross-reference-check` skill to verify consistency
