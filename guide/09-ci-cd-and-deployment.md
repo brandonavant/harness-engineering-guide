@@ -402,3 +402,7 @@ Treat CI/CD changes with the same rigor as code changes. A broken CI pipeline bl
 ### Iterating on CI/CD
 
 Expect to iterate. The first CI pipeline the agent produces will probably work for the happy path but miss edge cases: caching, parallel jobs, service container configuration, platform-specific issues. Each failure teaches you something. Encode the fix in a rule or the workflow itself, and move on.
+
+---
+
+Next: [Chapter 10 -- Entropy Management: Fighting Drift in Agent-Generated Code](10-entropy-management.md)

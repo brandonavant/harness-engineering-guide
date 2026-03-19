@@ -389,3 +389,7 @@ The five-layer pattern applies wherever taste and consistency matter, not only t
 5. **Do not mix concerns in the skill invocation.** If the design skill says to read `docs/brand-identity.md`, read it. Do not also read the architecture doc, the API spec, and the CI config "just in case." Load what the skill tells you to load and nothing more.
 
 6. **Treat checklist failures as blocking.** If more than 2 items fail, revise. Do not proceed to the next component hoping to fix it later. Fix it now, while the context for this component is fresh.
+
+---
+
+Next: [Chapter 07 -- Quality Gates: Verification, Enforcement, and Integration Testing](07-quality-gates.md)

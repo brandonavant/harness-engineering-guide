@@ -50,11 +50,12 @@ Brand Identity. Each document feeds the next.
   `Args:`, `Returns:`/`Yields:`, and `Raises:` sections as applicable. Omit sections that would be empty.
 - Use **type hints** on function signatures and where they aid readability.
 
-## Research Before Implementing
+## Research Before Reasoning About Claude Code
 
-This guide teaches Claude Code features (rules, skills, hooks, CLAUDE.md). Before creating or modifying any harness
-file, verify the current format against Anthropic's official documentation — do not rely on training knowledge, MCP
-index tools, or the guide's own examples (which may be outdated).
+This guide teaches Claude Code features (rules, skills, hooks, CLAUDE.md). Any time a task involves reasoning about
+how Claude Code features work — whether answering a question, evaluating a design, or creating or modifying a harness
+file — fetch the relevant official documentation first. Do not rely on training knowledge, MCP index tools, or the
+guide's own examples, which may be outdated.
 
 **Authoritative source:** Fetch directly from `https://code.claude.com/docs/en/` using WebFetch. Key pages:
 

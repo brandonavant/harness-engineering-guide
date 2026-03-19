@@ -545,3 +545,7 @@ Phase end:
 6. **Do not assume what the other agent did.** If you need to know whether the backend implemented an endpoint, check
    the contract — not the other agent's code (which you may not even have access to in a worktree). The contract is the
    shared truth.
+
+---
+
+Next: [Chapter 06 -- Design Intent Preservation: The Anti-Slop System](06-design-intent.md)

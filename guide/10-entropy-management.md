@@ -404,3 +404,7 @@ Use this checklist after every 3-5 phases:
 ```
 
 Fifteen to thirty minutes, every couple of weeks. This is the cost of keeping a codebase healthy. The cost of not doing it is much higher — you just pay it later, all at once, when the codebase is too inconsistent for the agent to navigate.
+
+---
+
+Next: [Chapter 11 -- Failure Modes: Common Mistakes and How to Avoid Them](11-failure-modes.md)

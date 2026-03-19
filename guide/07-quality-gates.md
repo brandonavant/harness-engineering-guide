@@ -522,3 +522,7 @@ Edit a file
 No single level is sufficient. The linter does not catch logic errors. Tests do not catch integration failures. The smoke test does not catch style violations. Together, they form a defense that catches the vast majority of issues before they reach production.
 
 The investment is front-loaded. Setting up hooks, writing the smoke test, configuring CI, and creating security skills takes time upfront. But the return compounds across every session, every phase, and every agent that works on the project. Verification infrastructure is the gift that keeps giving.
+
+---
+
+Next: [Chapter 08 -- Implementation: The Human-Agent Loop](08-implementation.md)
