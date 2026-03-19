@@ -62,11 +62,11 @@ valuable and most constrained piece of context you will write.
 
 ## Tech Stack
 
-| Layer    | Stack                          |
-|----------|--------------------------------|
-| Frontend | Next.js, TypeScript, Tailwind  |
+| Layer    | Stack                            |
+|----------|----------------------------------|
+| Frontend | Next.js, TypeScript, Tailwind    |
 | Backend  | FastAPI, Python 3.12, SQLAlchemy |
-| Database | PostgreSQL 16                  |
+| Database | PostgreSQL 16                    |
 
 ## Agent Identification
 
@@ -95,9 +95,10 @@ Notice what is *absent*: no architecture rationale, no design token values, no d
 deeper tiers.
 
 **The OpenAI lesson:** The `AGENTS.md` pattern — one large file containing everything — emerged as an alternative
-approach. We found that a single monolithic file degrades as projects grow. At 500+ lines, agents start missing rules
-buried in the middle. The progressive disclosure model keeps Tier 1 lean and pushes detail to tiers that load only when
-relevant.
+approach. As discussed in their [Harness Engineering](https://openai.com/index/harness-engineering/) blog, OpenAI found
+that a single monolithic file degrades as projects grow. At 500+ lines, agents start missing rules buried in the middle.
+The progressive disclosure model keeps Tier 1 lean and pushes detail to tiers that load
+only when relevant.
 
 ---
 
