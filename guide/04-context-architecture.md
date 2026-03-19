@@ -203,22 +203,29 @@ not typography tokens. This separation is both context management and cost manag
     SKILL.md
   api-contract-check/
     SKILL.md
+    reference.md         # supplemental reference, loaded on demand
   security-review/
     SKILL.md
+    scripts/
+      run-audit.sh       # script Claude can execute
 ```
 
-Each `SKILL.md` defines:
+`SKILL.md` is the required entrypoint for every skill. Skills can also include supporting files — templates, example
+outputs, scripts, reference docs — that `SKILL.md` references so Claude loads them only when needed. This keeps the main
+file focused while making detailed material available on demand.
 
-- When to invoke it (trigger conditions)
-- What context to load (files to read, rules to follow)
-- What to produce (checklist results, validation output)
+Each `SKILL.md` must begin with YAML frontmatter between `---` markers, followed by Markdown instructions. The
+`description` field is the most important: Claude uses it to decide when to auto-invoke the skill.
 
 **Example skill (API contract check):**
 
 ```markdown
-# API Contract Check
+---
+name: api-contract-check
+description: Validates implementation against the OpenAPI contract. Invoke after implementing or modifying any API endpoint, request/response schema, or frontend API call.
+---
 
-Invoke this skill after implementing or modifying any API endpoint, request/response schema, or frontend API call.
+# API Contract Check
 
 ## Process
 
@@ -241,6 +248,9 @@ Invoke this skill after implementing or modifying any API endpoint, request/resp
 - [ ] Error responses match contract
 - [ ] No undocumented endpoints added
 ```
+
+For the complete frontmatter reference — including `disable-model-invocation`, `allowed-tools`, `context: fork`, and
+supporting file patterns — see the [official skills documentation](https://code.claude.com/docs/en/skills).
 
 **When to use a skill vs. a path-scoped rule:**
 
