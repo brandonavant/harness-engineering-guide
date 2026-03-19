@@ -1,14 +1,14 @@
-# Chapter 05 -- Agent Orchestration: From Single Session to Teams
+# Chapter 05 -- Agent Orchestration: Sessions, Subagents, and Worktrees
 
-> **Part 3: HARNESS** | Maps to templates: `templates/.agent-instructions/agent-template.md`,
-`templates/.agent-state/agent-template.md`, `templates/contracts/README.md`
+> **Part 3: HARNESS** | Maps to templates: `templates/.claude/agents/agent-template.md`,
+`templates/contracts/README.md`
 
 Most Claude Code work happens in a single session. One human, one agent, one context window. This is the default for
 good reason — it is simple, predictable, and sufficient for the majority of tasks.
 
 But real products have multiple domains. A frontend and a backend. A database layer and an API layer. A design system
-and a CI pipeline. When you need parallel progress across domains, you scale from one session to many. This chapter
-covers how — and more importantly, when — to make that transition.
+and a CI pipeline. When you need parallel progress across domains, subagents and worktrees provide isolation without
+coordination overhead. This chapter covers how — and more importantly, when — to move beyond a single session.
 
 ---
 
@@ -16,16 +16,16 @@ covers how — and more importantly, when — to make that transition.
 
 **Start simple, scale deliberately.** The overhead of multi-agent orchestration is real: context duplication, conflict
 resolution, integration verification. A single session that takes twice as long often produces better results than two
-agents that step on each other.
+subagents that step on each other.
 
 **Agents are specialists, not generalists.** When you do scale, each agent should own a clear domain. Overlap creates
 conflicts. Ambiguity creates inconsistency. Territorial boundaries are not bureaucracy — they are the primary mechanism
 for preventing agents from undoing each other's work.
 
-**The interface is the contract.** When two agents share a boundary (an API, a database schema, a type definition), that
-boundary must be governed by an explicit contract that neither agent modifies unilaterally. Without this, Agent A
-implements the API one way while Agent B consumes it another way, and you discover the mismatch only at integration
-time.
+**The interface is the contract.** When two subagents share a boundary (an API, a database schema, a type definition),
+that boundary must be governed by an explicit contract that neither subagent modifies unilaterally. Without this,
+Subagent A implements the API one way while Subagent B consumes it another way, and you discover the mismatch only at
+integration time.
 
 ---
 
@@ -113,7 +113,76 @@ Do not modify files. Report findings only.
 
 Key frontmatter fields: `name` (unique identifier), `description` (routing trigger — see below), `tools`
 (allowlist; omit to inherit all tools), `model` (`haiku`, `sonnet`, `opus`, or `inherit`), `background`
-(`true` to run async), `isolation` (`worktree` for an isolated git worktree).
+(`true` to run async), `isolation` (`worktree` for an isolated git worktree), `memory` (persistence scope:
+`user`, `project`, or `local` — stored at `.claude/agent-memory/<name>/`), `skills` (list of skills to
+preload into the subagent's context). See the
+[official subagent documentation](https://code.claude.com/docs/en/sub-agents) for the full field reference.
+
+**The definition body is the system prompt.** The Markdown below the frontmatter is the subagent's complete
+briefing — identity, territory, rules, phases. For implementation subagents that need parallel work across
+domains, write the body as a full briefing document:
+
+``````markdown
+---
+name: recipe-backend
+description: "Backend implementation agent for RecipeVault. Use when implementing API
+  endpoints, database models, migrations, or backend business logic. Use proactively
+  when the user starts backend work."
+tools: Read, Edit, Write, Bash, Glob, Grep
+model: inherit
+memory: project
+skills:
+  - api-contract-check
+---
+
+# Identity
+
+You are the backend implementation agent for RecipeVault. You implement server-side
+logic, API endpoints, database models, and background tasks. You implement against
+the design documents and API contract — you do not invent requirements.
+
+## Territory
+
+### Files You Own
+
+- apps/backend/ — all source code, tests, and configuration
+- scripts/ — build and deployment scripts
+- alembic/ — database migrations
+
+### Shared (Read-Only)
+
+- contracts/openapi.yaml — implement against this, never modify
+- docker-compose.yml — read for service configuration, never modify
+
+### Off Limits
+
+- apps/frontend/ — owned by frontend subagent
+- packages/shared-types/ — owned by frontend subagent
+- docs/ — owned by human, read-only for all agents
+
+## Implementation Rules
+
+- Every endpoint must have request/response Pydantic schemas
+- All database operations use async SQLAlchemy sessions
+- Test coverage required for all new endpoints
+- Run `ruff check` before considering any change complete
+
+## Phases
+
+### Phase 1: Models and Schemas
+
+- Database models for Recipe, Ingredient, MealPlan
+- Pydantic schemas matching openapi.yaml
+- Alembic migration for initial tables
+
+### Phase 2: Core Endpoints
+
+- GET/POST/PATCH/DELETE for each resource
+- Auth middleware integration
+- Request validation
+``````
+
+The subagent reads its entire definition — frontmatter and body — before starting work.
 
 ### The description field
 
@@ -155,93 +224,39 @@ files import it, whether any extend or modify it, and whether the shape
 is consistent across all usages."
 ```
 
----
+### Persistent memory
 
-## Level 3: Agent Teams
+The `memory` frontmatter field gives subagents cross-session continuity. When set to `project` (recommended),
+Claude Code stores the subagent's memory at `.claude/agent-memory/<name>/`. This directory is automatically
+loaded on each invocation — the subagent picks up where it left off.
 
-Agent teams run multiple named teammates, each with their own context window, working in parallel on different domains
-of the same project.
+**How it works:**
 
-> **Feature status:** Agent teams require opt-in. Enablement details (flags, version requirements) may change as
-> the feature matures — consult the [official agent teams documentation](https://code.claude.com/docs/en/agent-teams)
-> for current setup instructions before building a team.
+- The subagent's `MEMORY.md` index (first 200 lines) is autoloaded at startup
+- The subagent reads and writes memory files in its `.claude/agent-memory/<name>/` directory
+- Memory persists across sessions — shut down, restart, and the subagent remembers
 
-### Architecture
+**What to store in agent memory:**
 
-A team has a **team lead** (the main Claude Code session) and **teammates** (separate Claude Code instances). The
-lead spawns teammates, assigns work, and coordinates across phases. Teammates do not share context with each other
-or with the lead — each starts fresh with only its spawn prompt.
+- Completed phases and task status
+- Test results and verification outcomes
+- Contract deviations flagged for human review
+- Known issues, blockers, and workarounds
+- Decisions made during implementation and their rationale
 
-Coordination happens through two built-in mechanisms:
-
-- **Task list** — a shared list of work items that teammates claim and complete
-- **Mailbox** — direct messaging between lead and teammates, or broadcast to all
-
-The harness pattern taught in this chapter — instruction files and state files — complements these built-in
-mechanisms. Instruction files give each teammate its complete briefing at spawn time (since teammates do not inherit
-the lead's history). State files provide continuity across phases when teammates are shut down and restarted.
-
-**Teammate display mode:** Claude Code can display teammates inline or in split panes. Set `teammateMode` in
-`settings.json` to `"in-process"` for inline or `"tmux"` for split panes. Split panes require tmux or iTerm2 —
-the VS Code integrated terminal does not support them.
-
-**Good for:**
-
-- Frontend + backend in parallel
-- Multiple independent features that touch different files
-- Large refactoring across separate domains
-- Competing implementation approaches (try two designs, pick the best)
-
-**Team sizing guidelines:**
-
-- 3-5 teammates per team. More than 5 creates coordination overhead that outweighs the parallelism benefit.
-- 5-6 tasks per teammate per phase. Smaller task lists keep each agent focused.
-- Each teammate should own different files. If two teammates need to edit the same file, restructure the work so they
-  do not.
-
-**Setting up a team:**
-
-Each teammate gets:
-
-1. An **agent instruction file** (`.agent-instructions/<agent-name>.md`) defining identity, territory, and tasks
-2. An **agent state file** (`.agent-state/<agent-name>.md`) for tracking progress and logging deviations
-3. Clear **territorial boundaries** — files they own and files they must not touch
-
-The team lead spawns teammates, monitors progress via the shared task list, and runs integration verification
-between phases.
-
-**Limitations to know before you start:**
-
-- No `/resume` or `/rewind` for in-progress teammates — session resumption is not supported for teammate instances
-- One team per session — teams cannot be nested; teammates cannot spawn their own teams
-- All teammates start with the lead's permission mode
-
-### Subagents vs. teams
-
-Use a subagent when you need one isolated task completed and only the result matters — investigation, research, or a
-focused sub-task. The main agent delegates, the subagent works in its own context, and the summary returns. Control
-stays with the main agent throughout.
-
-Use a team when the scope is too large for a single session and the work splits across genuinely independent domains.
-Teammates run simultaneously, coordinate via a shared task list, and message each other directly — they are peers
-working in parallel, not reporters returning results.
-
-The rule: if the work produces a **result**, use a subagent. If the work produces **ongoing parallel progress across
-domains**, use a team.
-
-Teams carry coordination overhead that subagents do not. If the work can fit in one session or be serialized across
-sessions, a subagent — or no delegation at all — is the right choice.
+The subagent's built-in memory system provides cross-session continuity automatically.
 
 ---
 
-## Level 4: Worktree Isolation
+## Level 3: Worktree Isolation
 
-For maximum isolation, each agent gets its own copy of the repository via Git worktrees. Each agent works on its own
-branch in its own directory. No file conflicts are possible because agents operate on physically separate file trees.
+For maximum isolation, each subagent gets its own copy of the repository via Git worktrees. Each subagent works on its
+own branch in its own directory. No file conflicts are possible because subagents operate on physically separate file
+trees.
 
 **When to use worktrees:**
 
-- Agents are making large-scale changes across many files in their domain
+- Subagents are making large-scale changes across many files in their domain
 - You need true parallel execution without any risk of file contention
 - The project is large enough that context isolation matters for performance
 
@@ -263,16 +278,16 @@ For monorepos with large shared directories (e.g., `node_modules`), configure `w
 **The critical workflow — memorize this sequence:**
 
 ```
-1. Agents commit all changes to their worktree branch
-2. Agents shut down
-3. Merge each agent's branch into main (or target branch)
-4. Delete worktrees (TeamDelete or manual cleanup)
+1. Subagents commit all changes to their worktree branch
+2. Subagents shut down
+3. Merge each subagent's branch into main (or target branch)
+4. Delete worktrees (manual cleanup)
 ```
 
 **NEVER delete a worktree with unmerged work.** Worktree deletion removes the directory and can remove the branch. Any
 uncommitted or unmerged changes are permanently lost. This is not recoverable.
 
-**Before shutting down any agent in a worktree**, instruct it to:
+**Before shutting down any subagent in a worktree**, instruct it to:
 
 1. Stage and commit all changes
 2. Report its branch name
@@ -296,7 +311,7 @@ git worktree remove <path>
 
 ## Territorial Boundaries
 
-When multiple agents work on the same codebase, territorial boundaries prevent conflicts. Each agent's instruction file
+When multiple subagents work on the same codebase, territorial boundaries prevent conflicts. Each subagent's definition
 specifies exactly what it owns and what it must not touch.
 
 **Example territory definition:**
@@ -315,151 +330,24 @@ specifies exactly what it owns and what it must not touch.
 
 ## Off Limits (never touch)
 
-- apps/frontend/ — owned by frontend agent
-- packages/shared-types/ — owned by frontend agent
+- apps/frontend/ — owned by frontend subagent
+- packages/shared-types/ — owned by frontend subagent
 - docs/ — owned by human, read-only for all agents
 ```
 
-**Why this matters:** Without boundaries, Agent A refactors a shared utility that Agent B depends on. Agent B's tests
-break. Agent B "fixes" them by reverting Agent A's change. You end up with merge conflicts and wasted work. Territorial
-boundaries eliminate this category of failure entirely.
+**Why this matters:** Without boundaries, Subagent A refactors a shared utility that Subagent B depends on. Subagent B's
+tests break. Subagent B "fixes" them by reverting Subagent A's change. You end up with merge conflicts and wasted work.
+Territorial boundaries eliminate this category of failure entirely.
 
-**The contract layer:** For boundaries that agents share (like an API), use an explicit contract file that neither agent
-modifies. Both agents implement *against* the contract. If an agent discovers it needs a contract change, it documents
-the need in its state file — the human decides whether to update the contract.
-
----
-
-## Agent Instruction Files
-
-Each agent gets an instruction file at `.agent-instructions/<agent-name>.md`. This is the agent's briefing document — it
-reads this before starting work.
-
-**Structure of an agent instruction file:**
-
-```markdown
-# <Agent Name> — Implementation Agent
-
-## Identity
-
-You are the backend implementation agent for [Project]. You implement
-server-side logic, API endpoints, database models, and background tasks.
-
-## Tech Stack
-
-- Python 3.12+, FastAPI, SQLAlchemy 2.0, Alembic
-- PostgreSQL 16 with pgvector extension
-- pytest for testing, ruff for linting
-
-## Territory
-
-### Your Files
-
-- apps/backend/
-
-### Off Limits
-
-- apps/frontend/
-- docs/ (read-only)
-
-## Implementation Rules
-
-- Every endpoint must have request/response Pydantic schemas
-- All database operations use async SQLAlchemy sessions
-- Test coverage required for all new endpoints
-- Run `ruff check` before considering any change complete
-
-## Testing Requirements
-
-- Unit tests for all business logic
-- Integration tests for API endpoints (use TestClient)
-- Run full suite: `pytest apps/backend/tests/ -v`
-- All tests must pass before marking a phase complete
-
-## Verification Steps
-
-After completing each phase:
-
-1. Run linter: `ruff check apps/backend/`
-2. Run tests: `pytest apps/backend/tests/ -v`
-3. Verify Docker build: `docker compose build backend`
-4. Update your state file with results
-
-## Phase List
-
-### Phase 1: Models and Schemas
-
-- Database models for User, Character, Campaign
-- Pydantic schemas matching openapi.yaml
-- Alembic migration for initial tables
-
-### Phase 2: Core Endpoints
-
-- GET/POST/PATCH/DELETE for each resource
-- Auth middleware integration
-- Request validation
-
-[... additional phases ...]
-```
-
-**Key elements:**
-
-- **Identity** — tells the agent what it is and sets the frame for all decisions
-- **Territory** — prevents file conflicts (covered above)
-- **Rules** — domain-specific conventions that apply to all work
-- **Testing** — how to verify, what commands to run, what "done" means
-- **Phases** — ordered task list so the agent knows what to work on
-
----
-
-## Agent State Files
-
-Each agent maintains a state file at `.agent-state/<agent-name>.md`. This is a living log of what has been done, what
-was found, and what deviates from expectations.
-
-**What goes in the state file:**
-
-```markdown
-# Backend Agent — State
-
-## Completed Phases
-
-### Phase 1: Models and Schemas (2024-03-10)
-
-- Created 5 SQLAlchemy models
-- Created 12 Pydantic schemas
-- Migration 0001 applied successfully
-- All 23 tests passing
-- Linter clean
-
-## Test Results (Latest)
-
-- Total: 89 passing, 0 failing
-- Coverage: 87% (apps/backend/src/)
-
-## Contract Deviations
-
-- Added `narrative` type to ParsedSegment enum — not in openapi.yaml.
-  Reason: needed for AI output parsing. Flagged for human review.
-
-## Known Issues
-
-- Embedding service not available (requires Azure OpenAI provisioning).
-  Using mock embeddings in tests. Blocked for live integration testing.
-
-## Integration Verification
-
-- Last smoke test: 16/16 passing (2024-03-10)
-```
-
-**Why state files matter:** When a new session starts (or a different agent needs to understand what happened), the
-state file provides continuity. It is the agent's work log.
+**The contract layer:** For boundaries that subagents share (like an API), use an explicit contract file that neither
+subagent modifies. Both subagents implement *against* the contract. If a subagent discovers it needs a contract change,
+it documents the need in its agent memory — the human decides whether to update the contract.
 
 ---
 
 ## Contract Governance for Multi-Agent Work
 
-When multiple agents share an interface, the interface definition must be treated as an immutable contract during
+When multiple subagents share an interface, the interface definition must be treated as an immutable contract during
 implementation.
 
 **The contract pattern:**
@@ -468,21 +356,21 @@ implementation.
 contracts/
   openapi.yaml        # API contract between frontend and backend
   database-schema.sql  # Database contract (or use migrations as source of truth)
-  shared-types.ts      # Type definitions consumed by multiple agents
+  shared-types.ts      # Type definitions consumed by multiple subagents
 ```
 
 **Rules:**
 
-1. The contract is written before agents begin implementation (by the human or a design phase)
-2. Both agents implement *against* the contract, not against each other's code
-3. Neither agent modifies the contract unilaterally
-4. If an agent needs a contract change, it documents the need in its state file under "Contract Deviations"
+1. The contract is written before subagents begin implementation (by the human or a design phase)
+2. Both subagents implement *against* the contract, not against each other's code
+3. Neither subagent modifies the contract unilaterally
+4. If a subagent needs a contract change, it documents the need in its agent memory under "Contract Deviations"
 5. The human reviews deviations and decides whether to update the contract
-6. After a contract update, both agents are informed
+6. After a contract update, both subagents are informed
 
-**Why unilateral changes are forbidden:** If the backend agent adds a field to the API response, the frontend agent does
-not know about it. If the frontend agent changes the expected request body shape, the backend agent's validation rejects
-it. Contract stability is what makes parallel work possible.
+**Why unilateral changes are forbidden:** If the backend subagent adds a field to the API response, the frontend
+subagent does not know about it. If the frontend subagent changes the expected request body shape, the backend
+subagent's validation rejects it. Contract stability is what makes parallel work possible.
 
 **Practical workflow:**
 
@@ -491,13 +379,13 @@ Phase start:
   Human reviews contract, confirms it is current
 
 During phase:
-  Backend agent implements endpoints matching contract
-  Frontend agent implements API calls matching contract
-  Both agents document any needed changes in state files
+  Backend subagent implements endpoints matching contract
+  Frontend subagent implements API calls matching contract
+  Both subagents document any needed changes in their agent memory
 
 Phase end:
-  Human reviews state files for contract deviations
-  If changes needed: update contract, notify both agents
+  Human reviews agent memory for contract deviations
+  If changes needed: update contract, notify both subagents
   Run integration smoke test to verify alignment
 ```
 
@@ -505,20 +393,20 @@ Phase end:
 
 ## What the Human Should Do
 
-1. **Start with single sessions.** Do not set up agent teams for a new project. Build the first few features in single
-   sessions to establish patterns and conventions.
+1. **Start with single sessions.** Build the first features in single sessions to establish patterns and conventions.
+   Define subagents only when you have genuinely independent domains that benefit from parallel work.
 
-2. **Define territories before launching agents.** Write the agent instruction files. Specify ownership clearly. Resolve
-   any ambiguous boundaries before agents start work.
+2. **Define subagents in `.claude/agents/` before launching parallel work.** Write the definition files. Specify
+   identity, territory, rules, and phases. Resolve any ambiguous boundaries before subagents start work.
 
 3. **Write the contract first.** For multi-agent work, the API spec, database schema, or shared type definitions must
-   exist before agents begin implementing. Do not let agents discover the interface by implementing both sides.
+   exist before subagents begin implementing. Do not let subagents discover the interface by implementing both sides.
 
-4. **Run integration verification between phases.** Agents test in isolation. They mock the boundaries they do not own.
-   Integration failures only surface when you test the real system. This is your job.
+4. **Run integration verification between phases.** Subagents test in isolation. They mock the boundaries they do not
+   own. Integration failures only surface when you test the real system. This is your job.
 
-5. **Review state files.** After each agent phase, read the state files. Look for contract deviations, known issues, and
-   test gaps. Address deviations before starting the next phase.
+5. **Review agent memory between phases.** After each subagent phase, review the subagent's memory for contract
+   deviations, known issues, and test gaps. Address deviations before starting the next phase.
 
 6. **Merge carefully.** When using worktree isolation, merge one branch at a time. Run tests after each merge. If there
    are conflicts, resolve them before merging the next branch.
@@ -527,24 +415,25 @@ Phase end:
 
 ## What the Agent Should Do
 
-1. **Read your instruction file first.** Before starting any work, read `.agent-instructions/<your-name>.md`. Follow its
-   rules, respect its territory, work through its phases in order.
+1. **Follow your definition's system prompt.** Before starting any work, read and follow the instructions in your
+   subagent definition. Use your agent memory for cross-session continuity — read it at session start to understand
+   what has been completed.
 
-2. **Stay in your territory.** Do not modify files outside your ownership. If you need a change in another agent's
-   territory, document it in your state file and flag it for the human.
+2. **Stay in your territory.** Do not modify files outside your ownership. If you need a change in another subagent's
+   territory, document it in your agent memory and flag it for the human.
 
 3. **Implement against the contract.** Read the contract (API spec, schema definition) and match it exactly. If your
    implementation needs something the contract does not provide, document the deviation — do not change the contract.
 
-4. **Update your state file.** After completing each phase, log what was done, test results, and any issues or
+4. **Update your agent memory after completing each phase.** Log what was done, test results, and any issues or
    deviations. This is not optional — it is how continuity works across sessions.
 
 5. **Commit before shutdown.** If working in a worktree, always commit all changes and report your branch name before
    the session ends. Uncommitted work in a worktree can be lost permanently.
 
-6. **Do not assume what the other agent did.** If you need to know whether the backend implemented an endpoint, check
-   the contract — not the other agent's code (which you may not even have access to in a worktree). The contract is the
-   shared truth.
+6. **Do not assume what the other subagent did.** If you need to know whether the backend implemented an endpoint, check
+   the contract — not the other subagent's code (which you may not even have access to in a worktree). The contract is
+   the shared truth.
 
 ---
 

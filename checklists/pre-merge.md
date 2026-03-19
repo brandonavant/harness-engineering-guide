@@ -31,13 +31,13 @@ main branch.
   proxies, auth cookie mismatches, ORM-to-schema drift, and misconfigured service dependencies. If you can only do one
   thing on this list beyond reading the diff, do this.
 
-- [ ] **Agent state file reflects the completed work**
-  The agent state file should list what was done, what tests were run, and what files were changed. If the state file is
+- [ ] **Agent memory reflects the completed work**
+  The agent memory should list what was done, what tests were run, and what files were changed. If agent memory is
   stale or missing, future agents (and future you) will have to reverse-engineer the work from the diff.
 
 - [ ] **CLAUDE.md, rules, and skills updated if changes affect them**
   If the PR introduces a new convention, a new mandatory check, or changes the build process, the harness must be
-  updated to reflect it. Otherwise the next agent session will operate under stale assumptions. The harness is a living
+  updated to reflect it. Otherwise, the next agent session will operate under stale assumptions. The harness is a living
   document, not a one-time setup.
 
 - [ ] **Documentation updated if behavior changed**

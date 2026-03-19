@@ -116,14 +116,12 @@ that everything else builds on.
 ```
 my-project/
   .claude/
-    rules/          # Scoped rules (added as needed)
-    skills/         # Custom skills (added as needed)
-  .agent-instructions/
-    backend-agent.md    # (if multi-agent; otherwise skip)
-    frontend-agent.md
-  .agent-state/
-    backend-agent.md    # (if multi-agent; otherwise skip)
-    frontend-agent.md
+    agents/             # Custom subagent definitions (if multi-agent)
+      backend-agent.md
+      frontend-agent.md
+    agent-memory/       # Subagent persistent memory (auto-created)
+    rules/              # Scoped rules (added as needed)
+    skills/             # Custom skills (added as needed)
   contracts/
     openapi.yaml    # API contract (added in Chapter 03)
   docs/
@@ -140,9 +138,9 @@ A few notes on this structure:
 **`.claude/` is Claude Code's configuration directory.** Rules and skills placed here are automatically discovered. You
 do not need to reference them in CLAUDE.md.
 
-**`.agent-instructions/` and `.agent-state/` are for multi-agent setups.** If you are working with a single agent (most
-projects start this way), you can skip these. They become important when you have separate agents for backend and
-frontend work, each with their own scope and state tracking. We cover this in Chapter 05.
+**`.claude/agents/` is for multi-agent setups.** If you are working with a single agent (most projects start this way),
+you can skip subagent definitions. They become important when you have separate subagents for backend and frontend work,
+each with their own scope and persistent memory. We cover this in [Chapter 05](05-agent-orchestration.md).
 
 **`contracts/` is separate from `docs/`.** The API contract (OpenAPI YAML) is a formal interface specification, not a
 design document. It is the source of truth that both frontend and backend implement against. Keeping it separate
@@ -273,7 +271,7 @@ constraints the agent must always respect.
 - **Aspirational guidelines.** "Try to write clean code" is meaningless. "All functions must have type hints" is
   enforceable.
 - **Duplicated content.** If it is in a design doc, do not repeat it in CLAUDE.md. Point to the doc.
-- **Temporary notes.** Use `.agent-state/` files for transient state, not CLAUDE.md.
+- **Temporary notes.** Use agent memory for transient state, not CLAUDE.md.
 - **Long lists of every technology, library, or pattern.** The agent can read package.json and requirements.txt.
   CLAUDE.md should contain decisions the agent cannot infer from the code itself.
 

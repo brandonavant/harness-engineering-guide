@@ -49,16 +49,16 @@ when and how to reset context is the difference between a productive session and
 
 - [ ] **Commit all changes.** Uncommitted work exists only in the filesystem. It will survive a reset, but you lose the
   ability to diff against a known state.
-- [ ] **Ensure the agent state file is updated.** Write down what was completed, what was in progress, and what
-  decisions were made. The state file is the bridge between the dying context and the new one.
+- [ ] **Ensure agent memory is updated.** Write down what was completed, what was in progress, and what
+  decisions were made. Agent memory is the bridge between the dying context and the new one.
 - [ ] **Save important decisions.** If you made a key architectural decision during the session, write it to
-  auto-memory, the agent state file, or a doc. Context resets erase decisions that only existed in conversation.
+  agent memory or a doc. Context resets erase decisions that only existed in conversation.
 
 ## After Any Reset
 
-- [ ] **Re-read the relevant instructions.** Tell the agent to read CLAUDE.md, the relevant agent instruction file, or
+- [ ] **Re-read the relevant instructions.** Tell the agent to read CLAUDE.md, the relevant subagent definition, or
   the specific skill needed for the current task. Do not assume it knows what it knew before.
 - [ ] **Re-invoke the relevant skill.** If the task requires a mandatory skill (design enforcement, contract check),
   invoke it explicitly. Skills load context at the moment of maximum relevance.
-- [ ] **Check the agent state file.** Have the agent read its state file to pick up where the previous session left off.
-  The state file is your continuity mechanism across context boundaries.
+- [ ] **Check agent memory.** Have the agent read its agent memory to pick up where the previous session left off.
+  Agent memory is your continuity mechanism across context boundaries.

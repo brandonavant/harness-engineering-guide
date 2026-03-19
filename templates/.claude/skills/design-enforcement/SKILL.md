@@ -26,6 +26,7 @@ them so you can actively avoid them.
 ### 1.1 Tailwind Default Syndrome
 
 The agent reaches for the same utility classes on every component:
+
 - `rounded-lg` on everything (buttons, cards, inputs, avatars -- all the same radius)
 - `bg-gray-50`, `bg-gray-100`, `bg-zinc-800` as the only surface colors
 - `p-4 gap-4` as universal spacing (everything 16px apart, no rhythm)
@@ -108,11 +109,11 @@ Use design tokens exclusively. No raw Tailwind color utilities.
 
 **[CUSTOMIZE]** -- specify your actual font stack.
 
-| Role | Font | Fallback | Usage |
-|------|------|----------|-------|
-| Display | [Your display font] | serif | Page titles, hero text |
-| Body | [Your body font] | serif | Paragraphs, descriptions |
-| UI | [Your UI font] | sans-serif | Buttons, labels, inputs, nav |
+| Role    | Font                | Fallback   | Usage                        |
+|---------|---------------------|------------|------------------------------|
+| Display | [Your display font] | serif      | Page titles, hero text       |
+| Body    | [Your body font]    | serif      | Paragraphs, descriptions     |
+| UI      | [Your UI font]      | sans-serif | Buttons, labels, inputs, nav |
 
 Every page must use at least 2 of these 3 roles. A page using only the UI font fails.
 
@@ -132,19 +133,20 @@ is a failure. Use the design token scale:
 
 Vary by component type. Do NOT use `rounded-lg` on everything.
 
-| Component | Radius |
-|-----------|--------|
-| Buttons | `rounded-md` (6px) |
-| Cards / Panels | `rounded-xl` (12px) |
-| Inputs | `rounded-sm` (4px) |
-| Avatars | `rounded-full` |
-| Modals | `rounded-2xl` (16px) |
+| Component      | Radius               |
+|----------------|----------------------|
+| Buttons        | `rounded-md` (6px)   |
+| Cards / Panels | `rounded-xl` (12px)  |
+| Inputs         | `rounded-sm` (4px)   |
+| Avatars        | `rounded-full`       |
+| Modals         | `rounded-2xl` (16px) |
 
 **[CUSTOMIZE]** -- adjust radii to match your brand.
 
 ### Elevation (Dark Backgrounds)
 
 On dark themes, elevation is communicated through luminance, not shadows.
+
 - Level 0 (page background): darkest value
 - Level 1 (cards, panels): slightly lighter
 - Level 2 (dropdowns, modals): lighter still
@@ -158,6 +160,7 @@ On dark themes, elevation is communicated through luminance, not shadows.
 Run every item against the component or page you are building. Mark each PASS or FAIL.
 
 ### Typography (7 items)
+
 1. [ ] Display/heading font is NOT the same as body/UI font.
 2. [ ] At least 3 distinct font sizes are used on this screen.
 3. [ ] At least 2 distinct font weights are used on this screen.
@@ -167,6 +170,7 @@ Run every item against the component or page you are building. Mark each PASS or
 7. [ ] Heading hierarchy is clear (H1 > H2 > H3 visually distinct without relying on size alone).
 
 ### Color (5 items)
+
 8. [ ] Zero instances of `bg-gray-*`, `bg-zinc-*`, `bg-slate-*` in this component.
 9. [ ] Accent color is used intentionally (1-2 focal points per screen, not everywhere).
 10. [ ] Text contrast meets WCAG AA (4.5:1 for body, 3:1 for large text).
@@ -174,6 +178,7 @@ Run every item against the component or page you are building. Mark each PASS or
 12. [ ] Interactive elements have distinct hover/focus/active states using the token palette.
 
 ### Layout (5 items)
+
 13. [ ] Spacing is non-uniform (at least 3 different gap/padding values on this screen).
 14. [ ] Content has visual grouping (related items closer together, sections separated).
 15. [ ] The layout is NOT a centered column of uniform-width cards.
@@ -181,17 +186,20 @@ Run every item against the component or page you are building. Mark each PASS or
 17. [ ] Negative space is intentional (some areas have generous whitespace, some are compact).
 
 ### Interaction (4 items)
+
 18. [ ] Buttons have labels specific to their action (not generic "Submit" / "Cancel").
 19. [ ] At least one micro-interaction exists (hover effect, transition, subtle animation).
 20. [ ] Loading states are contextual (skeleton matching content shape, not a centered spinner).
 21. [ ] Empty states have personality (helpful message, suggested action -- not just "No data").
 
 ### Voice (3 items)
+
 22. [ ] No user-facing text says "AI", "model", "generate", or "prompt" (unless that IS the product).
 23. [ ] Error messages are specific and actionable ("Task title is required" not "Validation error").
 24. [ ] Placeholder text is realistic (not "Lorem ipsum" or "Enter text here").
 
 ### Screenshot Verification (3 items)
+
 25. [ ] Side-by-side with a competitor: this page is visually distinguishable.
 26. [ ] Cover the logo: could this page belong to any app, or is the brand evident?
 27. [ ] View at both mobile (375px) and desktop (1280px): nothing clips, overflows, or collapses.
@@ -204,9 +212,10 @@ After completing the checklist:
 
 1. Count PASS vs FAIL items.
 2. If any item in Typography, Color, or Layout fails, the component is NOT ready to ship. Fix before proceeding.
-3. If any item in Interaction or Voice fails, fix if possible; document in the state file if deferred.
-4. Screenshot Verification items require visual confirmation -- use Playwright or a browser screenshot tool at 375px and 1280px viewports.
-5. Record the checklist results in your agent state file.
+3. If any item in Interaction or Voice fails, fix if possible; document in your agent memory if deferred.
+4. Screenshot Verification items require visual confirmation -- use Playwright or a browser screenshot tool at 375px and
+   1280px viewports.
+5. Record the checklist results in your agent memory.
 
 **Minimum passing score:** 22/27 (all Typography, Color, and Layout items must pass;
 up to 5 items in Interaction/Voice/Screenshot may be deferred with justification).

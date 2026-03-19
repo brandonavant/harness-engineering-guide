@@ -18,7 +18,7 @@ Run through every section below in order. Do NOT skip steps. Record results inli
 
 ## 1. Code Completeness
 
-- [ ] All tasks listed in the phase scope (from `.agent-instructions/`) are implemented.
+- [ ] All tasks listed in the phase scope (from your agent definition) are implemented.
 - [ ] No TODO, FIXME, or HACK comments were left behind (unless explicitly deferred).
 - [ ] No placeholder or stub implementations remain (empty function bodies, `pass` statements, `// TODO`).
 - [ ] All new files have been staged. Run `git status` and verify nothing is untracked.
@@ -38,7 +38,7 @@ cd apps/frontend && npm run test
 ```
 
 - [ ] All tests pass (zero failures, zero errors).
-- [ ] No tests were skipped unless documented in the state file with a reason.
+- [ ] No tests were skipped unless documented in your agent memory with a reason.
 - [ ] New code has corresponding test coverage (endpoints have happy + error path tests, components have render tests).
 
 ## 3. Lint and Type Check
@@ -80,11 +80,11 @@ If this phase touched any API surface (endpoints, schemas, frontend API calls):
 
 - [ ] Implementation matches `contracts/openapi.yaml` exactly.
 - [ ] No undocumented endpoints or response fields were added.
-- [ ] Any necessary deviations are recorded in the state file under "Contract Deviations."
+- [ ] Any necessary deviations are recorded in your agent memory under "Contract Deviations."
 
-## 7. State File Updated
+## 7. Agent Memory Updated
 
-Update your `.agent-state/*.md` file with:
+Update your agent memory with:
 
 - [ ] Current phase marked as complete.
 - [ ] Completed tasks checklist filled in.

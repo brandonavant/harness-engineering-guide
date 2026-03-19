@@ -1,22 +1,32 @@
 # Chapter 07 -- Quality Gates: Verification, Enforcement, and Integration Testing
 
-> **Part 3: HARNESS** | Maps to templates: `templates/.claude/hooks/README.md`, `templates/scripts/integration-smoke-test.sh`, `templates/.claude/skills/example-checklist.md`
+> **Part 3: HARNESS** | Maps to templates: `templates/.claude/hooks/README.md`,
+`templates/scripts/integration-smoke-test.sh`, `templates/.claude/skills/example-checklist.md`
 
 Give Claude a way to verify its work. This is the single highest-leverage thing you can do.
 
-Without feedback loops, Claude produces plausible code. It compiles. It looks reasonable. It may even pass a surface-level review. But plausible is not correct. Edge cases are missed. Integration boundaries break silently. Security vulnerabilities replicate from training data patterns. Verification turns plausible into reliable.
+Without feedback loops, Claude produces plausible code. It compiles. It looks reasonable. It may even pass a
+surface-level review. But plausible is not correct. Edge cases are missed. Integration boundaries break silently.
+Security vulnerabilities replicate from training data patterns. Verification turns plausible into reliable.
 
-This chapter covers the verification hierarchy — from automatic hooks that run after every file edit to integration smoke tests that catch the failures unit tests cannot.
+This chapter covers the verification hierarchy — from automatic hooks that run after every file edit to integration
+smoke tests that catch the failures unit tests cannot.
 
 ---
 
 ## Principles
 
-**Verification compounds.** Each layer of verification catches a different class of error. Linters catch syntax and style. Type checkers catch contract violations. Tests catch logic errors. Integration tests catch boundary failures. No single layer is sufficient. Together, they form a safety net with very small holes.
+**Verification compounds.** Each layer of verification catches a different class of error. Linters catch syntax and
+style. Type checkers catch contract violations. Tests catch logic errors. Integration tests catch boundary failures. No
+single layer is sufficient. Together, they form a safety net with very small holes.
 
-**Automatic beats advisory.** A rule in CLAUDE.md says "run the linter." A hook runs the linter automatically after every file edit. The rule depends on the agent remembering. The hook does not. For anything objective and deterministic, prefer automatic enforcement.
+**Automatic beats advisory.** A rule in CLAUDE.md says "run the linter." A hook runs the linter automatically after
+every file edit. The rule depends on the agent remembering. The hook does not. For anything objective and deterministic,
+prefer automatic enforcement.
 
-**Fast feedback beats thorough feedback.** A linter that runs in 500ms after every file edit provides more value than a full test suite that runs in 5 minutes at the end of a phase. The agent can correct course immediately rather than accumulating errors.
+**Fast feedback beats thorough feedback.** A linter that runs in 500ms after every file edit provides more value than a
+full test suite that runs in 5 minutes at the end of a phase. The agent can correct course immediately rather than
+accumulating errors.
 
 ---
 
@@ -24,22 +34,26 @@ This chapter covers the verification hierarchy — from automatic hooks that run
 
 ### Level 1: Hooks — Automatic, After Every Edit
 
-Hooks are scripts that run automatically after Claude Code edits a file. They are configured in `.claude/hooks/` and execute without agent intervention. The agent sees the output — including errors — and can react immediately.
+Hooks are scripts that run automatically after Claude Code edits a file. They are configured in `.claude/hooks/` and
+execute without agent intervention. The agent sees the output — including errors — and can react immediately.
 
 **What hooks are good for:**
+
 - Linting (syntax errors, style violations, import ordering)
 - Formatting (consistent code style)
 - Type checking (contract violations, missing types)
 - Quick validation (file structure, naming conventions)
 
 **What hooks are NOT good for:**
+
 - Full test suites (too slow for per-edit execution)
 - Integration testing (requires running services)
 - Subjective quality checks (design review, code architecture)
 
 **Hook configuration:**
 
-Claude Code hooks are defined in `.claude/hooks/` or in your project's Claude Code settings. They specify a trigger (file pattern), a command, and an error behavior.
+Claude Code hooks are defined in `.claude/hooks/` or in your project's Claude Code settings. They specify a trigger (
+file pattern), a command, and an error behavior.
 
 **Example: Python linting after every edit**
 
@@ -73,7 +87,9 @@ Claude Code hooks are defined in `.claude/hooks/` or in your project's Claude Co
 }
 ```
 
-**Error messages matter.** When a hook fails, the agent reads the error output. Well-formatted error messages that include the file, line number, and remediation suggestion enable the agent to fix the issue immediately. Cryptic error codes require the agent to search for documentation, wasting context and time.
+**Error messages matter.** When a hook fails, the agent reads the error output. Well-formatted error messages that
+include the file, line number, and remediation suggestion enable the agent to fix the issue immediately. Cryptic error
+codes require the agent to search for documentation, wasting context and time.
 
 **Example of a good hook error message:**
 
@@ -90,15 +106,19 @@ The agent reads this, understands the problem, and fixes it in the next edit. Co
 E0001: type error at line 45
 ```
 
-This requires the agent to read the file, figure out what is on line 45, and guess what "type error" means in this context.
+This requires the agent to read the file, figure out what is on line 45, and guess what "type error" means in this
+context.
 
 ---
 
 ### Level 2: Skills — Mandatory, Invoked Before Work
 
-Skills are checklists and validation workflows that the agent invokes before or after specific categories of work. Unlike hooks, skills are not automatic — they require the agent to follow an instruction in CLAUDE.md or its agent instruction file.
+Skills are checklists and validation workflows that the agent invokes before or after specific categories of work.
+Unlike hooks, skills are not automatic — they require the agent to follow an instruction in CLAUDE.md or its subagent
+definition.
 
 **What skills are good for:**
+
 - Design enforcement (Chapter 6)
 - API contract validation
 - Security review checklists
@@ -111,10 +131,11 @@ Skills are checklists and validation workflows that the agent invokes before or 
 # API Contract Check
 
 ## When to invoke
-After implementing or modifying any API endpoint, request/response
-schema, or frontend API call.
+
+After implementing or modifying any API endpoint, request/response schema, or frontend API call.
 
 ## Process
+
 1. Read contracts/openapi.yaml for the relevant endpoint.
 2. Compare implementation against contract:
    - [ ] HTTP method and path match
@@ -124,35 +145,43 @@ schema, or frontend API call.
    - [ ] Error response shape matches contract
 3. If deviation found:
    - Do NOT modify the contract
-   - Document in .agent-state/*.md under "Contract Deviations"
+   - Document in your agent memory under "Contract Deviations"
    - Continue implementation with the deviation noted
 ```
 
-**The skill-to-hook promotion pattern:** Start a verification as a skill (advisory). If the agent repeatedly fails to invoke it, or if violations accumulate, promote it to a hook (automatic). Skills are the staging area for enforcement rules.
+**The skill-to-hook promotion pattern:** Start a verification as a skill (advisory). If the agent repeatedly fails to
+invoke it, or if violations accumulate, promote it to a hook (automatic). Skills are the staging area for enforcement
+rules.
 
 ---
 
 ### Level 3: Test Suites — Agent-Run, Per Phase
 
-The agent runs the project's test suite as part of its workflow. Tests verify logic, behavior, and contracts at a deeper level than linting.
+The agent runs the project's test suite as part of its workflow. Tests verify logic, behavior, and contracts at a deeper
+level than linting.
 
-**Invest in making tests fast and reliable.** If your test suite takes 10 minutes, the agent will run it once at the end of a phase and miss intermediate regressions. If it takes 30 seconds, the agent runs it after every significant change and catches errors immediately.
+**Invest in making tests fast and reliable.** If your test suite takes 10 minutes, the agent will run it once at the end
+of a phase and miss intermediate regressions. If it takes 30 seconds, the agent runs it after every significant change
+and catches errors immediately.
 
-**Test commands belong in CLAUDE.md and agent instruction files:**
+**Test commands belong in CLAUDE.md and subagent definitions:**
 
 ```markdown
 ## Testing
+
 - Backend: `pytest apps/backend/tests/ -v` (target: <60 seconds)
 - Frontend: `npm test -- --watchAll=false` (target: <90 seconds)
 - Run after completing each phase. All tests must pass before proceeding.
 ```
 
 **Agent testing patterns that work:**
+
 - Run the targeted test file after changing a module: `pytest apps/backend/tests/test_users.py -v`
 - Run the full suite before marking a phase complete
 - If a test fails, fix it before moving to the next task (do not accumulate failures)
 
-**Agent testing anti-patterns:**
+**Agent testing antipatterns:**
+
 - Mocking everything — tests pass but nothing actually works (see Level 4 below)
 - Writing tests that only cover the happy path
 - Skipping tests "because I'll fix them later"
@@ -164,19 +193,26 @@ The agent runs the project's test suite as part of its workflow. Tests verify lo
 
 This is where the real failures hide.
 
-**The fundamental problem with agent-written tests:** Agents mock the boundaries they do not own. The backend agent mocks the database client. The frontend agent mocks the API. The tests pass in isolation. But when you connect the real frontend to the real backend to the real database, four things can go wrong that no unit test would catch.
+**The fundamental problem with agent-written tests:** Agents mock the boundaries they do not own. The backend agent
+mocks the database client. The frontend agent mocks the API. The tests pass in isolation. But when you connect the real
+frontend to the real backend to the real database, four things can go wrong that no unit test would catch.
 
 **Real-world integration failures caught by smoke tests, missed by 400+ passing unit tests:**
 
-1. **Auth cookie format mismatch.** The auth library sent cookies in `token.signature` format. The backend split on `.` expecting `base64.hmac`. Both sides had passing tests with mocked auth. The real cookie was rejected.
+1. **Auth cookie format mismatch.** The auth library sent cookies in `token.signature` format. The backend split on `.`
+   expecting `base64.hmac`. Both sides had passing tests with mocked auth. The real cookie was rejected.
 
-2. **ORM/schema drift.** A migration was fixed to add a column, but the SQLAlchemy model was not updated. The migration ran fine. The model loaded fine in tests (which used a different fixture). The real query failed at runtime.
+2. **ORM/schema drift.** A migration was fixed to add a column, but the SQLAlchemy model was not updated. The migration
+   ran fine. The model loaded fine in tests (which used a different fixture). The real query failed at runtime.
 
-3. **Missing API proxy.** The frontend API client called `/api/users`. The frontend server had no proxy configured to forward these to the backend. Frontend tests used a mock server at the same origin. The real request returned a 404.
+3. **Missing API proxy.** The frontend API client called `/api/users`. The frontend server had no proxy configured to
+   forward these to the backend. Frontend tests used a mock server at the same origin. The real request returned a 404.
 
-4. **Wrong build configuration.** A sidecar service's Dockerfile specified an incorrect build backend. Unit tests did not build the Docker image. The CI pipeline built it and it failed.
+4. **Wrong build configuration.** A sidecar service's Dockerfile specified an incorrect build backend. Unit tests did
+   not build the Docker image. The CI pipeline built it and it failed.
 
-None of these are exotic. All of them are common in multi-agent development. All of them are caught by a smoke test that exercises the real system.
+None of these are exotic. All of them are common in multi-agent development. All of them are caught by a smoke test that
+exercises the real system.
 
 **Smoke test structure:**
 
@@ -250,20 +286,24 @@ echo "=== Results: $PASS/$TOTAL passed, $FAIL failed ==="
 ```
 
 **When to run it:**
+
 - After every agent phase completes
 - Before starting the next phase
 - After merging worktree branches
 - After any infrastructure change (Docker config, proxy config, auth config)
 
-**Who runs it:** The human (or the orchestrating session). Not the individual agents. Agents work in isolation and may not have the full stack running.
+**Who runs it:** The human (or the orchestrating session). Not the individual agents. Agents work in isolation and may
+not have the full stack running.
 
-**Extending the smoke test:** As new features land, add checks for those flows. The smoke test should grow with the project. A new API endpoint? Add a check. A new page? Verify it loads. A new auth flow? Exercise it end to end.
+**Extending the smoke test:** As new features land, add checks for those flows. The smoke test should grow with the
+project. A new API endpoint? Add a check. A new page? Verify it loads. A new auth flow? Exercise it end to end.
 
 ---
 
 ### Level 5: CI Pipeline — Automatic on PR
 
-The CI pipeline runs automatically when a pull request is opened. It is the final gate before code reaches the main branch.
+The CI pipeline runs automatically when a pull request is opened. It is the final gate before code reaches the main
+branch.
 
 **A minimal CI pipeline for agent-driven development:**
 
@@ -272,7 +312,7 @@ The CI pipeline runs automatically when a pull request is opened. It is the fina
 name: CI
 on:
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   lint:
@@ -308,7 +348,9 @@ jobs:
         run: docker build -t frontend apps/frontend/
 ```
 
-**CI is the backstop, not the primary defense.** If your CI catches a linting error, the hook should have caught it first. If CI catches a test failure, the agent should have run the tests during development. CI exists to catch what slips through — the rate of CI failures should decrease as your hooks and skills mature.
+**CI is the backstop, not the primary defense.** If your CI catches a linting error, the hook should have caught it
+first. If CI catches a test failure, the agent should have run the tests during development. CI exists to catch what
+slips through — the rate of CI failures should decrease as your hooks and skills mature.
 
 ---
 
@@ -321,6 +363,7 @@ The rule exists in documentation. The agent should follow it. There is no mechan
 
 ```markdown
 # In CLAUDE.md
+
 - Prefer named exports over default exports in TypeScript files.
 ```
 
@@ -329,6 +372,7 @@ The rule is part of a skill checklist. The agent must invoke the skill and verif
 
 ```markdown
 # In a skill file
+
 - [ ] All TypeScript exports are named (no default exports)
 ```
 
@@ -337,14 +381,18 @@ The rule is enforced by tooling. The agent cannot produce output that violates i
 
 ```json
 // ESLint rule
-{ "import/no-default-export": "error" }
+{
+  "import/no-default-export": "error"
+}
 ```
 
 **When to promote:**
+
 - Advisory to Mandatory: When you observe the agent violating the rule repeatedly despite it being documented
 - Mandatory to Mechanical: When the rule is objective, deterministic, and critical — and a tool can enforce it
 
 **When NOT to promote:**
+
 - Subjective rules ("the design should feel premium") cannot be mechanically enforced
 - Rules that have legitimate exceptions should stay advisory or mandatory, not mechanical
 - Rules that are expensive to check (full build required) should not be hooks (run on every edit)
@@ -353,7 +401,9 @@ The rule is enforced by tooling. The agent cannot produce output that violates i
 
 ## Security in Quality Gates
 
-Agent-generated code is susceptible to the same vulnerabilities as human-written code — with one additional risk: agents replicate patterns from training data, including insecure ones. If the training data contains SQL injection patterns, the agent may reproduce them.
+Agent-generated code is susceptible to the same vulnerabilities as human-written code — with one additional risk: agents
+replicate patterns from training data, including insecure ones. If the training data contains SQL injection patterns,
+the agent may reproduce them.
 
 **Security is not a phase — it is a property of every phase.**
 
@@ -363,6 +413,7 @@ Agent-generated code is susceptible to the same vulnerabilities as human-written
 # Security Review
 
 Invoke after implementing any of:
+
 - User input handling
 - Database queries
 - Authentication/authorization
@@ -371,6 +422,7 @@ Invoke after implementing any of:
 - Environment variable usage
 
 ## Checklist
+
 - [ ] All user input is validated (type, length, format)
 - [ ] Database queries use parameterized statements (no string interpolation)
 - [ ] Authentication checks on every protected endpoint
@@ -398,11 +450,15 @@ Invoke after implementing any of:
 }
 ```
 
-**OWASP Top 10 awareness:** Include a brief reference to OWASP Top 10 in your security skill. The agent does not need the full spec — it needs the category names and one-sentence descriptions so it can recognize when it is implementing something that touches a risk area.
+**OWASP Top 10 awareness:** Include a brief reference to OWASP Top 10 in your security skill. The agent does not need
+the full spec — it needs the category names and one-sentence descriptions so it can recognize when it is implementing
+something that touches a risk area.
 
 ```markdown
 ## OWASP Top 10 Quick Reference
+
 When your code touches any of these areas, apply extra scrutiny:
+
 1. Broken Access Control — verify authorization on every endpoint
 2. Cryptographic Failures — never store plaintext secrets, use strong hashing
 3. Injection — parameterize all queries, validate all input
@@ -415,7 +471,9 @@ When your code touches any of these areas, apply extra scrutiny:
 10. SSRF — validate and restrict outbound requests from server
 ```
 
-**The cost argument:** Security is cheaper to build in from the start than to retrofit. A security skill invoked during implementation costs one skill load per session. A security audit after 8 phases of implementation costs a full codebase review and potentially rewriting endpoints. Front-load the investment.
+**The cost argument:** Security is cheaper to build in from the start than to retrofit. A security skill invoked during
+implementation costs one skill load per session. A security audit after 8 phases of implementation costs a full codebase
+review and potentially rewriting endpoints. Front-load the investment.
 
 ---
 
@@ -461,47 +519,64 @@ Hooks in Claude Code run scripts at defined trigger points. The key trigger poin
 
 **Design principles for hooks:**
 
-1. **Keep them fast.** Hooks run frequently. A hook that takes 10 seconds disrupts the flow. Target under 2 seconds for afterEdit hooks, under 30 seconds for preCommit hooks.
+1. **Keep them fast.** Hooks run frequently. A hook that takes 10 seconds disrupts the flow. Target under 2 seconds for
+   afterEdit hooks, under 30 seconds for preCommit hooks.
 
-2. **Use `warn` for non-critical issues.** The agent sees the warning and can fix it. Use `block` only for issues that must be fixed before proceeding (secrets in commits, failing critical tests).
+2. **Use `warn` for non-critical issues.** The agent sees the warning and can fix it. Use `block` only for issues that
+   must be fixed before proceeding (secrets in commits, failing critical tests).
 
-3. **Include remediation in error output.** The agent reads hook error messages. A good error message tells the agent exactly what to do. A bad error message requires the agent to investigate.
+3. **Include remediation in error output.** The agent reads hook error messages. A good error message tells the agent
+   exactly what to do. A bad error message requires the agent to investigate.
 
-4. **Scope narrowly with `match` patterns.** A Python linter should not run when the agent edits a TypeScript file. Use file patterns to trigger hooks only for relevant files.
+4. **Scope narrowly with `match` patterns.** A Python linter should not run when the agent edits a TypeScript file. Use
+   file patterns to trigger hooks only for relevant files.
 
-5. **Auto-fix when possible.** `ruff check --fix` and `eslint --fix` correct issues automatically. The agent does not need to manually fix formatting or import ordering if the tool can do it.
+5. **Auto-fix when possible.** `ruff check --fix` and `eslint --fix` correct issues automatically. The agent does not
+   need to manually fix formatting or import ordering if the tool can do it.
 
 ---
 
 ## What the Human Should Do
 
-1. **Set up hooks early.** Before the first agent session, configure afterEdit hooks for linting and formatting. This is 15 minutes of setup that prevents hundreds of manual corrections.
+1. **Set up hooks early.** Before the first agent session, configure afterEdit hooks for linting and formatting. This is
+   15 minutes of setup that prevents hundreds of manual corrections.
 
-2. **Write the integration smoke test.** Start with health checks and auth flow. Expand as features land. Run it after every agent phase — this is your responsibility, not the agent's.
+2. **Write the integration smoke test.** Start with health checks and auth flow. Expand as features land. Run it after
+   every agent phase — this is your responsibility, not the agent's.
 
-3. **Set up CI before the first PR.** Even a minimal pipeline (lint + test + build) catches issues before they reach main.
+3. **Set up CI before the first PR.** Even a minimal pipeline (lint + test + build) catches issues before they reach
+   main.
 
-4. **Create the security skill.** Use the OWASP Top 10 reference, add project-specific security rules, make it mandatory for auth, input handling, and database code.
+4. **Create the security skill.** Use the OWASP Top 10 reference, add project-specific security rules, make it mandatory
+   for auth, input handling, and database code.
 
-5. **Review hook failure patterns.** If the same hook failure keeps recurring, the rule may need to be clearer, or it may need to be promoted from hook to CI (if it is too slow for per-edit execution).
+5. **Review hook failure patterns.** If the same hook failure keeps recurring, the rule may need to be clearer, or it
+   may need to be promoted from hook to CI (if it is too slow for per-edit execution).
 
-6. **Do not skip the smoke test.** It is tempting to skip "just this once" when the agent says all tests pass. The smoke test catches the failures that agent tests cannot. Run it every time.
+6. **Do not skip the smoke test.** It is tempting to skip "just this once" when the agent says all tests pass. The smoke
+   test catches the failures that agent tests cannot. Run it every time.
 
 ---
 
 ## What the Agent Should Do
 
-1. **Fix hook failures immediately.** When an afterEdit hook reports an error, fix it in the next edit. Do not accumulate lint errors across a phase.
+1. **Fix hook failures immediately.** When an afterEdit hook reports an error, fix it in the next edit. Do not
+   accumulate lint errors across a phase.
 
-2. **Run tests incrementally.** After changing a module, run its test file. After completing a phase, run the full suite. Do not wait until the end to discover 15 test failures.
+2. **Run tests incrementally.** After changing a module, run its test file. After completing a phase, run the full
+   suite. Do not wait until the end to discover 15 test failures.
 
-3. **Invoke security skills when touching sensitive code.** Auth endpoints, database queries, user input handling, file operations — these all warrant a security skill invocation.
+3. **Invoke security skills when touching sensitive code.** Auth endpoints, database queries, user input handling, file
+   operations — these all warrant a security skill invocation.
 
-4. **Do not suppress or ignore hook output.** Hook warnings exist for a reason. Even if the code "works," a warning indicates something that will cause problems later.
+4. **Do not suppress or ignore hook output.** Hook warnings exist for a reason. Even if the code "works," a warning
+   indicates something that will cause problems later.
 
-5. **Include verification results in state files.** After each phase, log: linter status, test count (pass/fail), any hook failures encountered and how they were resolved. This creates an audit trail.
+5. **Include verification results in your agent memory.** After each phase, log: linter status, test count (pass/fail),
+   any hook failures encountered and how they were resolved. This creates an audit trail.
 
-6. **Treat CI failure as your bug.** If CI fails on your PR, do not assume it is a flaky test. Investigate, fix, and push. The PR should not be reviewed until CI is green.
+6. **Treat CI failure as your bug.** If CI fails on your PR, do not assume it is a flaky test. Investigate, fix, and
+   push. The PR should not be reviewed until CI is green.
 
 ---
 
@@ -519,9 +594,13 @@ Edit a file
                       └─ CI runs on PR (catches anything that slipped through)
 ```
 
-No single level is sufficient. The linter does not catch logic errors. Tests do not catch integration failures. The smoke test does not catch style violations. Together, they form a defense that catches the vast majority of issues before they reach production.
+No single level is sufficient. The linter does not catch logic errors. Tests do not catch integration failures. The
+smoke test does not catch style violations. Together, they form a defense that catches the vast majority of issues
+before they reach production.
 
-The investment is front-loaded. Setting up hooks, writing the smoke test, configuring CI, and creating security skills takes time upfront. But the return compounds across every session, every phase, and every agent that works on the project. Verification infrastructure is the gift that keeps giving.
+The investment is front-loaded. Setting up hooks, writing the smoke test, configuring CI, and creating security skills
+takes time upfront. But the return compounds across every session, every phase, and every agent that works on the
+project. Verification infrastructure is the gift that keeps giving.
 
 ---
 

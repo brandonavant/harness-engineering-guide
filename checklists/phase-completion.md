@@ -7,7 +7,7 @@ minutes. Fixing a missed integration failure three phases later takes hours.
 ---
 
 - [ ] **All tasks for the phase are implemented**
-  Review the phase scope against what was actually built. Compare the agent state file or task list to the delivered
+  Review the phase scope against what was actually built. Compare the agent memory or task list to the delivered
   code. Partial implementations that "mostly work" become hidden debt in the next phase.
 
 - [ ] **Tests pass (run the full test suite, not just new tests)**
@@ -20,9 +20,9 @@ minutes. Fixing a missed integration failure three phases later takes hours.
   were actually invoked during this phase. Agents sometimes skip skills when context is crowded. Check the session
   output or skill logs.
 
-- [ ] **Agent state file updated**
-  The agent should have updated its state file with: completed tasks (as a checklist), test results summary, files
-  created or modified, and any deviations from the plan. If the state file is stale, future agents and future you will
+- [ ] **Agent memory updated**
+  The agent should have updated its agent memory with: completed tasks (as a checklist), test results summary, files
+  created or modified, and any deviations from the plan. If agent memory is stale, future agents and future you will
   not know what was done.
 
 - [ ] **Docker build succeeds (if applicable)**
@@ -56,5 +56,5 @@ minutes. Fixing a missed integration failure three phases later takes hours.
 
 - [ ] **No TODO/FIXME items left unresolved**
   Search the codebase for TODO and FIXME comments. If they exist, they should either be resolved in this phase or
-  explicitly documented in the agent state file as deferred work with a clear rationale. Undocumented TODOs become
+  explicitly documented in the agent memory as deferred work with a clear rationale. Undocumented TODOs become
   invisible tech debt.

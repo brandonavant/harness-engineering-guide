@@ -61,8 +61,8 @@ implement against without ambiguity.
 **[Chapter 04 -- Context Architecture: The Progressive Disclosure Hierarchy](guide/04-context-architecture.md)**
 The five-tier context hierarchy, how to structure each tier, and the golden rule: never load everything at once.
 
-**[Chapter 05 -- Agent Orchestration: From Single Session to Teams](guide/05-agent-orchestration.md)**
-When and how to scale from a single session to multi-agent coordination: territory boundaries, shared contracts,
+**[Chapter 05 -- Agent Orchestration: Sessions, Subagents, and Worktrees](guide/05-agent-orchestration.md)**
+When and how to scale from a single session to parallel subagent work: territory boundaries, shared contracts,
 worktree isolation, and integration gates.
 
 **[Chapter 06 -- Design Intent Preservation: The Anti-Slop System](guide/06-design-intent.md)**

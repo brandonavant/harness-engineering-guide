@@ -59,6 +59,20 @@ Next: [Chapter NN -- Title](NN-slug.md)
 - The linked path must be a valid relative Markdown link to the immediately following chapter
 - `11-failure-modes.md` intentionally has no `Next:` footer
 
+## Claude Code Feature Accuracy
+
+When a chapter describes how a Claude Code feature works (skills, rules, hooks, subagent definitions,
+CLAUDE.md format, settings), fetch the official documentation before writing or reviewing the content:
+
+- **Memory & rules**: `https://code.claude.com/docs/en/memory`
+- **Skills**: `https://code.claude.com/docs/en/skills`
+- **Hooks**: `https://code.claude.com/docs/en/hooks`
+- **Settings**: `https://code.claude.com/docs/en/settings`
+- **Subagents**: `https://code.claude.com/docs/en/sub-agents`
+
+Do not describe frontmatter fields, directory structures, or configuration formats from memory. The official
+docs are the only authoritative source. If they contradict the guide's current text, update the guide.
+
 ## Checklists
 
 The `checklists/` directory contains standalone checklists (project-kickoff, phase-completion, context-reset,
