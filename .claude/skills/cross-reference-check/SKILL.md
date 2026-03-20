@@ -23,6 +23,9 @@ The script checks:
 - Template path consistency (do paths referenced in guide chapters exist?)
 - Checklist file references (is every `checklists/*.md` file referenced somewhere?)
 - Canonical term presence (do `CLAUDE.md` and `README.md` contain required terms?)
+- Chapter title wording (do README.md and CHEATSHEET.md entries match each chapter's H1?)
+- Next: footer title match (does each Next: link's text match the target chapter's H1?)
+- Canonical terms registry drift (does the script's dict match `references/canonical-terms.md`?)
 
 Output is pipe-delimited: `TYPE|FILE|LINE|ISSUE|FIX`. If all checks pass, the script exits 0.
 
@@ -31,25 +34,7 @@ Output is pipe-delimited: `TYPE|FILE|LINE|ISSUE|FIX`. If all checks pass, the sc
 pattern example). Review each finding before reporting it — read the surrounding context to determine whether the
 flagged link is an actual reference or example text.
 
-## Step 2: Manual Checks
-
-The script handles mechanical validation. These checks require reading and judgment:
-
-### Chapter Title Wording
-
-Compare each chapter's H1 title against the **wording** in `README.md` lines 45-93 (the script only checks file
-presence, not title text match).
-
-### Canonical Term Consistency
-
-Read `references/canonical-terms.md` for the full registry. Verify each term is used with identical wording and
-capitalization in all dependent locations.
-
-### "Next:" Link Accuracy
-
-If chapters have "Next:" footer links, verify the link text matches the target chapter's actual H1 title.
-
-## Step 3: Report
+## Step 2: Report
 
 Present all findings (automated + manual) as a table:
 
