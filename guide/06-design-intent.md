@@ -354,21 +354,13 @@ Add lint rules (ESLint, Stylelint, or custom) that flag:
 
 **Example ESLint rule concept:**
 
-```javascript
+```json5
 // Conceptual — detect inline styles that should be Tailwind classes
 {
-    "rules"
-:
-    {
-        "no-inline-token-styles"
-    :
-        {
-            "message"
-        :
-            "Use Tailwind arbitrary values instead of inline styles for tokens. Example: p-[var(--space-4)]",
-                "pattern"
-        :
-            "style=\\{\\{.*var\\(--"
+    "rules": {
+        "no-inline-token-styles": {
+            "message": "Use Tailwind arbitrary values instead of inline styles for tokens. Example: p-[var(--space-4)]",
+            "pattern": "style=\\{\\{.*var\\(--"
         }
     }
 }
