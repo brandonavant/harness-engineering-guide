@@ -138,15 +138,15 @@ After implementing or modifying any API endpoint, request/response schema, or fr
 
 1. Read contracts/openapi.yaml for the relevant endpoint.
 2. Compare implementation against contract:
-   - [ ] HTTP method and path match
-   - [ ] Request body fields, types, and required/optional match
-   - [ ] Response body fields and types match
-   - [ ] All documented status codes are handled
-   - [ ] Error response shape matches contract
+    - [ ] HTTP method and path match
+    - [ ] Request body fields, types, and required/optional match
+    - [ ] Response body fields and types match
+    - [ ] All documented status codes are handled
+    - [ ] Error response shape matches contract
 3. If deviation found:
-   - Do NOT modify the contract
-   - Document in your agent memory under "Contract Deviations"
-   - Continue implementation with the deviation noted
+    - Do NOT modify the contract
+    - Document in your agent memory under "Contract Deviations"
+    - Continue implementation with the deviation noted
 ```
 
 **The skill-to-hook promotion pattern:** Start a verification as a skill (advisory). If the agent repeatedly fails to
