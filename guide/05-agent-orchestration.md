@@ -114,7 +114,7 @@ Do not modify files. Report findings only.
 Key frontmatter fields: `name` (unique identifier), `description` (routing trigger — see below), `tools`
 (allowlist; omit to inherit all tools), `model` (`haiku`, `sonnet`, `opus`, or `inherit`), `background`
 (`true` to run async), `isolation` (`worktree` for an isolated git worktree), `memory` (persistence scope:
-`user`, `project`, or `local` — stored at `.claude/agent-memory/<name>/`), `skills` (list of skills to
+`user`, `project`, or `local` — path varies by scope), `skills` (list of skills to
 preload into the subagent's context). See the
 [official subagent documentation](https://code.claude.com/docs/en/sub-agents) for the full field reference.
 
@@ -226,14 +226,20 @@ is consistent across all usages."
 
 ### Persistent memory
 
-The `memory` frontmatter field gives subagents cross-session continuity. When set to `project` (recommended),
-Claude Code stores the subagent's memory at `.claude/agent-memory/<name>/`. This directory is automatically
-loaded on each invocation — the subagent picks up where it left off.
+The `memory` frontmatter field gives subagents cross-session continuity. The storage path depends on scope:
+
+| Scope     | Location                                      | Use when                                                               |
+|-----------|-----------------------------------------------|------------------------------------------------------------------------|
+| `user`    | `~/.claude/agent-memory/<name>/`              | The subagent should remember learnings across all projects             |
+| `project` | `.claude/agent-memory/<name>/`                | The subagent's knowledge is project-specific and shareable via VCS     |
+| `local`   | `.claude/agent-memory-local/<name>/`          | The subagent's knowledge is project-specific but should not be checked in |
+
+Use `project` (recommended) for most cases. It makes subagent knowledge shareable via version control.
 
 **How it works:**
 
 - The subagent's `MEMORY.md` index (first 200 lines) is autoloaded at startup
-- The subagent reads and writes memory files in its `.claude/agent-memory/<name>/` directory
+- The subagent reads and writes memory files in its memory directory
 - Memory persists across sessions — shut down, restart, and the subagent remembers
 
 **What to store in agent memory:**
