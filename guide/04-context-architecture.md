@@ -181,7 +181,7 @@ paths:
 - It would cause real mistakes if forgotten (not nice-to-haves)
 - It is 10-40 lines (keep it focused)
 
-**Anti-pattern:** Do not create one rule file per source file. Rule files scope to directories and patterns, not
+**Antipattern:** Do not create one rule file per source file. Rule files scope to directories and patterns, not
 individual files. If you need that level of granularity, the rule probably belongs as a code comment.
 
 ---
@@ -191,7 +191,7 @@ individual files. If you need that level of granularity, the rule probably belon
 Skills live in `.claude/skills/`. They are invoked explicitly by name before specific work — either by the agent
 following a CLAUDE.md instruction, or by the human typing a slash command.
 
-**Skills are the key to context-scoped loading.** A design-enforcement skill loads brand constraints, anti-pattern
+**Skills are the key to context-scoped loading.** A design-enforcement skill loads brand constraints, antipattern
 catalogs, and visual checklists — not CI/CD config. An API validation skill loads the OpenAPI spec and schema rules —
 not typography tokens. This separation is both context management and cost management.
 

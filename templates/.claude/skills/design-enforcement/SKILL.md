@@ -1,6 +1,6 @@
 ---
 name: "design-check"
-description: "Anti-generic design enforcement -- catches AI-generated visual anti-patterns and verifies brand compliance."
+description: "Anti-generic design enforcement -- catches AI-generated visual antipatterns and verifies brand compliance."
 ---
 
 # Design Enforcement Check
@@ -8,7 +8,7 @@ description: "Anti-generic design enforcement -- catches AI-generated visual ant
 <!-- WHY THIS SKILL EXISTS:
 AI coding agents produce visually functional but aesthetically identical UIs. Left
 unchecked, every AI-built app converges on the same gray cards with rounded corners.
-This skill is a mechanical antidote: it catalogs the specific anti-patterns, defines
+This skill is a mechanical antidote: it catalogs the specific antipatterns, defines
 what "on-brand" means for YOUR project, and provides a 27-item checklist that must
 pass before any visual change ships. Invoke it every time you create or modify a
 component, page, or layout. -->
@@ -18,7 +18,7 @@ to the component or page you are building. Do not skip items.
 
 ---
 
-## Section 1: AI-Generated Anti-Patterns
+## Section 1: AI-Generated AntiPatterns
 
 These are the five most common ways AI-produced UIs look generic. Learn to recognize
 them so you can actively avoid them.
@@ -224,6 +224,6 @@ up to 5 items in Interaction/Voice/Screenshot may be deferred with justification
 
 ## [CUSTOMIZE]
 
-Replace Section 2 entirely with your project's design system. Section 1 (anti-patterns)
+Replace Section 2 entirely with your project's design system. Section 1 (antipatterns)
 and Section 3 (checklist) are universal -- keep them as-is and add project-specific items
 if needed. Section 4 can be adjusted to match your verification tooling.

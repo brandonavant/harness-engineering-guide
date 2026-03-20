@@ -5,7 +5,7 @@
 
 ## What This Will Cover
 
-- The multi-layer brand enforcement system: anti-pattern catalogs, design tokens, mandatory skills, measurable
+- The multi-layer brand enforcement system: antipattern catalogs, design tokens, mandatory skills, measurable
   checklists, and build-level enforcement
 - Why loading brand rules at the moment of maximum relevance (via skills) is more effective than CLAUDE.md rules alone
 - How naming specific failure modes (e.g., "Tailwind Default Syndrome") prevents generic output
