@@ -319,8 +319,24 @@ contracts/
 
 ### Tier 5: Auto-Memory — Persistent Across Sessions
 
-Claude Code maintains a memory file at `~/.claude/projects/<project-hash>/memory/MEMORY.md`. This persists across
-sessions for the same project. The agent appends to it; you can also edit it manually.
+Claude Code maintains a memory directory at `~/.claude/projects/<project>/memory/`. The `<project>` path is derived from
+the git repository, so all worktrees and subdirectories within the same repo share one memory directory. The directory
+contains a `MEMORY.md` index and optional topic files:
+
+```
+~/.claude/projects/<project>/memory/
+├── MEMORY.md          # Concise index — first 200 lines loaded every session
+├── debugging.md       # Detailed notes on debugging patterns
+├── api-conventions.md # API design decisions
+└── ...                # Any other topic files Claude creates
+```
+
+The first 200 lines of `MEMORY.md` are loaded at the start of every conversation. Topic files are not loaded at
+startup — Claude reads them on demand when it needs the information. Claude keeps `MEMORY.md` concise by moving detailed
+notes into separate topic files.
+
+Auto memory is machine-local and is not shared across machines or cloud environments. You can edit or delete any memory
+file at any time — they are plain Markdown.
 
 **What to store in memory:**
 
@@ -342,7 +358,7 @@ otherwise live only in a human engineer's head. When a new session starts, memor
 what failed, what conventions emerged.
 
 **Pruning:** Memory files grow. Periodically review and remove entries that are no longer relevant (completed phases,
-resolved issues, superseded decisions). A lean memory file is more useful than a comprehensive one.
+resolved issues, superseded decisions). A lean memory directory is more useful than a comprehensive one.
 
 ---
 

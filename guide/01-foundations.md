@@ -95,7 +95,7 @@ Practical mitigations:
 - Start fresh conversations for new tasks rather than continuing stale ones
 - Keep CLAUDE.md as the single source of truth, not conversation history
 - When a long conversation starts producing inconsistent results, that is your signal to start a new one
-- Use memory files (`.claude/memory/`) for facts that must persist across conversations
+- Use auto memory (`~/.claude/projects/<project>/memory/`) for facts that must persist across conversations
 
 ### Context as Cost
 
