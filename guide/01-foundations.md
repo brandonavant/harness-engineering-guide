@@ -14,7 +14,7 @@ Harness engineering is the discipline of designing environments that make AI age
 In Claude Code, the harness consists of:
 
 - **CLAUDE.md** -- The root configuration file that tells the agent what the project is, how to build it, and what rules to follow
-- **Rules** (`.claude/rules/`) -- Scoped instructions that activate based on file patterns or contexts
+- **Rules** (`.claude/rules/`) -- Scoped instructions that activate when Claude reads files matching their path patterns
 - **Skills** (`.claude/skills/`) -- Reusable instruction sets the agent can invoke for specific tasks
 - **Hooks** -- Pre- and post-action scripts that enforce constraints automatically (linting on save, tests before commit)
 - **Design documents** (`docs/`) -- PRD, architecture, UX spec, API contracts, brand identity
@@ -157,7 +157,7 @@ Fixes have different scopes and different persistence levels. Choose the right r
 | Scope | Mechanism | Persistence | When to Use |
 |-------|-----------|-------------|-------------|
 | This conversation only | Tell the agent directly | Dies when conversation ends | Truly one-off corrections |
-| This file pattern | `.claude/rules/` with glob | Persists across conversations | Pattern-specific guidance (e.g., "all migration files must...") |
+| This file pattern | `.claude/rules/` with `paths` frontmatter | Persists across conversations | Pattern-specific guidance (e.g., "all migration files must...") |
 | This project | CLAUDE.md | Persists across conversations | Project-wide rules and constraints |
 | This task type | `.claude/skills/` | Invoked on demand | Complex multi-step procedures |
 | This action | Hooks (pre-commit, etc.) | Runs automatically | Hard constraints that must never be violated |

@@ -393,13 +393,15 @@ All error responses MUST use this structure:
 [... concrete code examples ...]
 ```
 
-**Add a rule** when the guidance is short, universal, and always relevant. Rules go in `.claude/rules/` and are loaded
-automatically when files matching their glob are edited.
+**Add a rule** when the guidance is short, universal, and always relevant. Rules go in `.claude/rules/` and load
+automatically when Claude reads files matching their path patterns.
 
 ```markdown
 # .claude/rules/api-endpoints.md
-
-# globs: apps/backend/src/api/**/*.py
+---
+paths:
+  - "apps/backend/src/api/**/*.py"
+---
 
 - All endpoints return the standard error shape defined in skills/error-handling-patterns.md
 - Never return raw exception messages to clients

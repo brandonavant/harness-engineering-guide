@@ -115,8 +115,9 @@ only when relevant.
 
 ### Tier 2: Path-Scoped Rules — Loaded on File Match
 
-Path-scoped rules live in `.claude/rules/*.md`. Each file has YAML frontmatter specifying which file paths trigger it.
-When Claude reads or edits a file matching the path pattern, the corresponding rule loads automatically.
+Path-scoped rules live in `.claude/rules/` as `.md` files, discovered recursively (subdirectories are supported). Files
+with YAML frontmatter specifying a `paths` field trigger when Claude reads matching files. Files without `paths`
+frontmatter load unconditionally at session start.
 
 **This is zero-cost context when irrelevant.** A backend rule scoped to `apps/backend/**` never loads during a
 frontend-only session. You get precision without pollution.
