@@ -590,9 +590,14 @@ A doc-review skill should verify:
 
 ### Skill Definition Example
 
-Create `.claude/skills/doc-review.md`:
+Create `.claude/skills/doc-review/SKILL.md`:
 
 ```markdown
+---
+name: doc-review
+description: Reviews specification documents in docs/ and contracts/ for completeness, consistency, and cross-reference accuracy. Invoke after producing or updating any spec document.
+---
+
 # Doc Review Skill
 
 Review all specification documents in docs/ and contracts/ for completeness
@@ -703,7 +708,7 @@ If you are an AI agent executing the specification phase, here is your workflow:
 8. **Validate the API contract.** Run an OpenAPI linter if available. Verify that every endpoint has defined request and
    response schemas. Verify that error responses are consistent.
 
-9. **Build the doc-review skill.** Create `.claude/skills/doc-review.md` with the checklist from Section 3.9. Run it
+9. **Build the doc-review skill.** Create `.claude/skills/doc-review/SKILL.md` with the checklist from Section 3.9. Run it
    against your own output before presenting it for human review.
 
 10. **Commit each document separately.** One commit per document, with a clear commit message. This makes review easier

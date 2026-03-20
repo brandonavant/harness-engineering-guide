@@ -48,7 +48,7 @@ stack works end to end.
 > 3. `docs/ux-spec.md` — UX specification with screen inventory
 > 4. `contracts/api.yaml` — OpenAPI contract
 > 5. `docs/brand-identity.md` — Visual language and component conventions
-> 6. `.claude/skills/doc-review.md` — Skill that validates spec documents against the interview
+> 6. `.claude/skills/doc-review/SKILL.md` — Skill that validates spec documents against the interview
 >    summary for completeness and consistency
 >
 > Use the corresponding templates in `templates/docs/` and `templates/contracts/`. Each document
