@@ -23,6 +23,7 @@ CHEATSHEET_CHAPTER_LINK: re.Pattern[str] = re.compile(
     r"\[(Chapter \d+ -- [^]]+)]\(guide/([^)]+\.md)\)"
 )
 REGISTRY_ROW: re.Pattern[str] = re.compile(r'\|\s*"([^"]+)"\s*\|[^|]+\|\s*(.+?)\s*\|')
+INLINE_CODE: re.Pattern[str] = re.compile(r"(`+)(.+?)\1")
 CANONICAL_TERMS: dict[str, list[Path]] = {
     "five-tier context hierarchy": [
         REPO_ROOT / "CLAUDE.md",
@@ -47,6 +48,41 @@ def find_md_files() -> Iterator[Path]:
             yield path
 
 
+def _fenced_code_lines(lines: list[str]) -> list[bool]:
+    """Return per-line booleans indicating fenced code block membership.
+
+    Handles backtick and tilde fences of any length, matching the closing
+    fence to the opening fence character and minimum length per CommonMark.
+
+    Args:
+        lines: File content split into lines.
+
+    Returns:
+        List of booleans, one per line, True if inside a fenced code block.
+    """
+    result: list[bool] = []
+    in_block = False
+    fence_char = ""
+    fence_len = 0
+    for line in lines:
+        stripped = line.lstrip()
+        if not in_block:
+            m = re.match(r"(`{3,}|~{3,})", stripped)
+            if m:
+                fence_char = m.group(1)[0]
+                fence_len = len(m.group(1))
+                in_block = True
+                result.append(True)
+            else:
+                result.append(False)
+        else:
+            result.append(True)
+            m = re.match(r"(`{3,}|~{3,})\s*$", stripped)
+            if m and m.group(1)[0] == fence_char and len(m.group(1)) >= fence_len:
+                in_block = False
+    return result
+
+
 def check_internal_links(issues: list[str]) -> None:
     """Verify every [text](path.md) link resolves to an existing file.
 
@@ -58,8 +94,13 @@ def check_internal_links(issues: list[str]) -> None:
     """
     for md_file in find_md_files():
         parent = md_file.parent
-        for lineno, line in enumerate(md_file.read_text().splitlines(), start=1):
-            for _, link in LINK_PATTERN.findall(line):
+        lines = md_file.read_text().splitlines()
+        in_fence = _fenced_code_lines(lines)
+        for lineno, line in enumerate(lines, start=1):
+            if in_fence[lineno - 1]:
+                continue
+            cleaned = INLINE_CODE.sub("", line)
+            for _, link in LINK_PATTERN.findall(cleaned):
                 target = (parent / link).resolve()
                 if not target.is_file():
                     rel = md_file.relative_to(REPO_ROOT)
