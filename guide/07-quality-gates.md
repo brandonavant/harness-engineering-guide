@@ -1,7 +1,7 @@
 # Chapter 07 -- Quality Gates: Verification, Enforcement, and Integration Testing
 
 > **Part 3: HARNESS** | Maps to templates: `templates/.claude/hooks/README.md`,
-`templates/scripts/integration-smoke-test.sh`, `templates/.claude/skills/example-checklist.md`
+`templates/scripts/integration-smoke-test.sh`, `templates/.claude/skills/example-checklist/SKILL.md`
 
 Give Claude a way to verify its work. This is the single highest-leverage thing you can do.
 

@@ -200,8 +200,9 @@ individual files. If you need that level of granularity, the rule probably belon
 
 ### Tier 3: Skills — Loaded on Demand
 
-Skills live in `.claude/skills/`. They are invoked explicitly by name before specific work — either by the agent
-following a CLAUDE.md instruction, or by the human typing a slash command.
+Skills live in `.claude/skills/`. By default, both the human and Claude can invoke any skill. The human types a
+slash command (`/skill-name`), and Claude auto-invokes skills when it determines they are relevant based on the
+skill's description. You can also mandate invocation in CLAUDE.md for critical checks.
 
 **Skills are the key to context-scoped loading.** A design-enforcement skill loads brand constraints, antipattern
 catalogs, and visual checklists — not CI/CD config. An API validation skill loads the OpenAPI spec and schema rules —
@@ -226,8 +227,10 @@ not typography tokens. This separation is both context management and cost manag
 outputs, scripts, reference docs — that `SKILL.md` references so Claude loads them only when needed. This keeps the main
 file focused while making detailed material available on demand.
 
-Each `SKILL.md` must begin with YAML frontmatter between `---` markers, followed by Markdown instructions. The
-`description` field is the most important: Claude uses it to decide when to auto-invoke the skill.
+Each `SKILL.md` should begin with YAML frontmatter between `---` markers, followed by Markdown instructions.
+Frontmatter is technically optional, but omitting it is a mistake — the `description` field is how Claude decides
+when to auto-invoke the skill. Without it, Claude falls back to the first paragraph of Markdown content, which is
+less reliable for routing.
 
 **Example skill (API contract check):**
 
@@ -266,8 +269,11 @@ supporting file patterns — see the [official skills documentation](https://cod
 
 **When to use a skill vs. a path-scoped rule:**
 
-- Rule: applies *automatically* when touching certain files. No agent action needed.
-- Skill: applies *deliberately* before certain categories of work. Requires invocation.
+- Rule: triggers on *file patterns*. When Claude reads a file matching the rule's `paths` glob, the rule loads
+  automatically. No invocation needed.
+- Skill: triggers on *work type*. Claude auto-invokes skills when their description matches the current task, or
+  the human invokes them with `/skill-name`. Add `disable-model-invocation: true` to restrict a skill to
+  human-only invocation.
 
 If the context is always relevant to a file pattern, make it a rule. If it is relevant to a *type of work* (regardless
 of which files), make it a skill.
