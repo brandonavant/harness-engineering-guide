@@ -28,10 +28,15 @@ decision ever made. The agent needs to know *where to look*, not *everything at 
 
 ## The Five Tiers of Context
 
-### Tier 1: CLAUDE.md — Always Loaded (~200 lines)
+### Tier 1: CLAUDE.md — Always Loaded
 
-CLAUDE.md sits at your project root. Claude Code loads it automatically at the start of every session. It is the most
-valuable and most constrained piece of context you will write.
+CLAUDE.md lives at your project root — either `./CLAUDE.md` or `./.claude/CLAUDE.md`. Claude Code loads it automatically
+at the start of every session. It also walks up the directory tree above your working directory, loading any CLAUDE.md
+files it finds along the way, and loads a user-level file at `~/.claude/CLAUDE.md` for personal preferences that span all
+projects. CLAUDE.md files in subdirectories load on demand when the agent reads files in those directories.
+
+CLAUDE.md is loaded in full regardless of length — there is no truncation. But target under 200 lines per file. Past that
+threshold, attention dilution causes the agent to miss rules buried in the middle.
 
 **What it is:** A table of contents and a set of invariant rules. Not an encyclopedia.
 
@@ -94,6 +99,12 @@ npm run dev # frontend
 Notice what is *absent*: no architecture rationale, no design token values, no deployment procedures. Those live in
 deeper tiers.
 
+**Splitting a large CLAUDE.md:** If your file grows beyond 200 lines, three strategies keep it lean: move file-specific
+instructions to path-scoped rules (Tier 2), move work-type-specific instructions to skills (Tier 3), or use
+`@path/to/file` imports to factor sections into separate files that are expanded inline at load time. Imports keep the
+content always-loaded but in separate, maintainable files — useful for large reference tables or team conventions. Rules
+and skills provide true progressive disclosure, loading context only when relevant.
+
 **The OpenAI lesson:** The `AGENTS.md` pattern — one large file containing everything — emerged as an alternative
 approach. As discussed in their [Harness Engineering](https://openai.com/index/harness-engineering/) blog, OpenAI found
 that a single monolithic file degrades as projects grow. At 500+ lines, agents start missing rules buried in the middle.
@@ -104,8 +115,9 @@ only when relevant.
 
 ### Tier 2: Path-Scoped Rules — Loaded on File Match
 
-Path-scoped rules live in `.claude/rules/*.md`. Each file has YAML frontmatter specifying which file paths trigger it.
-When Claude reads or edits a file matching the path pattern, the corresponding rule loads automatically.
+Path-scoped rules live in `.claude/rules/` as `.md` files, discovered recursively (subdirectories are supported). Files
+with YAML frontmatter specifying a `paths` field trigger when Claude reads matching files. Files without `paths`
+frontmatter load unconditionally at session start.
 
 **This is zero-cost context when irrelevant.** A backend rule scoped to `apps/backend/**` never loads during a
 frontend-only session. You get precision without pollution.

@@ -55,6 +55,8 @@ Discard: earlier exploration of WebSocket alternatives and the prompt builder di
 
 Without focus instructions, `/compact` compresses everything equally, which may preserve the noise you want to discard. With focus instructions, it prioritizes the signal.
 
+**CLAUDE.md survives compaction.** After `/compact`, Claude Code re-reads your CLAUDE.md from disk and injects it fresh into the session. Instructions in CLAUDE.md are never lost to compaction. If an instruction disappeared after compacting, it was given only in conversation — add it to CLAUDE.md to make it persist across resets.
+
 ### What the Human Should Do
 
 Develop a habit of starting each work block with a fresh context. Before giving the agent a task, ask: "Is the current context helping or hurting?" If the answer is not clearly "helping," `/clear`.
