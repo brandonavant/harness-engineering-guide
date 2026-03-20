@@ -91,23 +91,32 @@ file pattern), a command, and an error behavior.
 include the file, line number, and remediation suggestion enable the agent to fix the issue immediately. Cryptic error
 codes require the agent to search for documentation, wasting context and time.
 
-**Example of a good hook error message:**
+Standard tools like `ruff`, `tsc`, and `eslint` already produce well-structured output with file paths, line numbers,
+and rule descriptions — they handle this well out of the box. The risk arises when you write **custom hook scripts** for
+project-specific validations: naming conventions, file structure checks, migration consistency, required headers, or
+architecture boundary enforcement. These scripts are where terse, unhelpful error messages creep in, because there is no
+linter framework generating the output for you — you write it yourself.
+
+**Example: a custom naming-convention hook**
+
+A well-written custom hook script produces output the agent can act on immediately:
 
 ```
-apps/backend/src/routes/users.py:45:5: E0001
-  Missing return type annotation on endpoint function.
-  Fix: Add -> UserResponse to the function signature.
-  Example: async def get_user(...) -> UserResponse:
+apps/backend/src/routes/users.py:45:5: NAMING-001
+  Endpoint function must use snake_case with HTTP verb prefix.
+  Found: getUser
+  Fix: Rename to get_user
 ```
 
-The agent reads this, understands the problem, and fixes it in the next edit. Compare to:
+Compare to what a lazily written version of the same script produces:
 
 ```
-E0001: type error at line 45
+NAMING-001: naming violation at line 45
 ```
 
-This requires the agent to read the file, figure out what is on line 45, and guess what "type error" means in this
-context.
+This requires the agent to read the file, figure out what is on line 45, and guess what "naming violation" means in this
+context. For every custom hook script, invest the time to include the file path, the offending code, and a concrete fix
+in the error output.
 
 ---
 
