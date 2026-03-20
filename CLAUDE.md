@@ -96,8 +96,8 @@ Sources of truth and their dependents. Check dependents after any change to the 
 
 | Source of Truth                         | Dependents to Check                                                 |
 |-----------------------------------------|---------------------------------------------------------------------|
-| Chapter H1 titles (`guide/*.md` line 1) | `README.md` lines 45-93, `CLAUDE.md`, "Next:" link in prior chapter |
-| Template paths (referenced in chapters) | Actual files in `templates/`                                        |
+| Chapter H1 titles (`guide/*.md` line 1) | `README.md` lines 45-93, `CLAUDE.md`, `CHEATSHEET.md`, "Next:" link in prior chapter |
+| Template paths (referenced in chapters) | Actual files in `templates/`, `CHEATSHEET.md`                       |
 | "five-tier context hierarchy" (Ch 04)   | `CLAUDE.md`, `README.md`                                            |
 | "document cascade" (Ch 03)              | `CLAUDE.md`, `README.md`, `templates/docs/README.md`                |
 | Template filenames                      | Chapter metadata lines, template `README.md` files                  |

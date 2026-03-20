@@ -2,6 +2,7 @@
 paths:
   - "README.md"
   - "CLAUDE.md"
+  - "CHEATSHEET.md"
 ---
 
 # Root File Editing Rules
@@ -16,6 +17,12 @@ update the corresponding README entry.
 - Must stay under 200 lines total
 - The Cross-Reference Registry section is the authoritative map of dependencies — keep it current when adding or
   renaming files
+
+## CHEATSHEET.md
+
+- Must stay under 200 lines total
+- Contains exactly 9 phases (0-8), each with: human action, blockquote prompt, verify step, and chapter link
+- Prompts use `[square bracket placeholders]` for project-specific values — no fictional examples
 
 ## Canonical Terms
 
