@@ -15,6 +15,15 @@ REPO_ROOT: Path = Path(__file__).resolve().parents[4]
 LINK_PATTERN: re.Pattern[str] = re.compile(r"\[([^]]+)]\(([^)]+\.md)\)")
 NEXT_PATTERN: re.Pattern[str] = re.compile(r"^Next: \[([^]]+)]\(([^)]+)\)\s*$", re.MULTILINE)
 FINAL_CHAPTER: str = "11-failure-modes.md"
+CHEATSHEET_PATH: Path = REPO_ROOT / "CHEATSHEET.md"
+README_CHAPTER_LINK: re.Pattern[str] = re.compile(
+    r"\*\*\[([^]]+)]\(guide/([^)]+\.md)\)\*\*"
+)
+CHEATSHEET_CHAPTER_LINK: re.Pattern[str] = re.compile(
+    r"\[(Chapter \d+ -- [^]]+)]\(guide/([^)]+\.md)\)"
+)
+REGISTRY_ROW: re.Pattern[str] = re.compile(r'\|\s*"([^"]+)"\s*\|[^|]+\|\s*(.+?)\s*\|')
+INLINE_CODE: re.Pattern[str] = re.compile(r"(`+)(.+?)\1")
 CANONICAL_TERMS: dict[str, list[Path]] = {
     "five-tier context hierarchy": [
         REPO_ROOT / "CLAUDE.md",
@@ -23,6 +32,7 @@ CANONICAL_TERMS: dict[str, list[Path]] = {
     "document cascade": [
         REPO_ROOT / "CLAUDE.md",
         REPO_ROOT / "README.md",
+        REPO_ROOT / "templates/docs/README.md",
     ],
 }
 
@@ -38,6 +48,41 @@ def find_md_files() -> Iterator[Path]:
             yield path
 
 
+def _fenced_code_lines(lines: list[str]) -> list[bool]:
+    """Return per-line booleans indicating fenced code block membership.
+
+    Handles backtick and tilde fences of any length, matching the closing
+    fence to the opening fence character and minimum length per CommonMark.
+
+    Args:
+        lines: File content split into lines.
+
+    Returns:
+        List of booleans, one per line, True if inside a fenced code block.
+    """
+    result: list[bool] = []
+    in_block = False
+    fence_char = ""
+    fence_len = 0
+    for line in lines:
+        stripped = line.lstrip()
+        if not in_block:
+            m = re.match(r"(`{3,}|~{3,})", stripped)
+            if m:
+                fence_char = m.group(1)[0]
+                fence_len = len(m.group(1))
+                in_block = True
+                result.append(True)
+            else:
+                result.append(False)
+        else:
+            result.append(True)
+            m = re.match(r"(`{3,}|~{3,})\s*$", stripped)
+            if m and m.group(1)[0] == fence_char and len(m.group(1)) >= fence_len:
+                in_block = False
+    return result
+
+
 def check_internal_links(issues: list[str]) -> None:
     """Verify every [text](path.md) link resolves to an existing file.
 
@@ -49,8 +94,13 @@ def check_internal_links(issues: list[str]) -> None:
     """
     for md_file in find_md_files():
         parent = md_file.parent
-        for lineno, line in enumerate(md_file.read_text().splitlines(), start=1):
-            for _, link in LINK_PATTERN.findall(line):
+        lines = md_file.read_text().splitlines()
+        in_fence = _fenced_code_lines(lines)
+        for lineno, line in enumerate(lines, start=1):
+            if in_fence[lineno - 1]:
+                continue
+            cleaned = INLINE_CODE.sub("", line)
+            for _, link in LINK_PATTERN.findall(cleaned):
                 target = (parent / link).resolve()
                 if not target.is_file():
                     rel = md_file.relative_to(REPO_ROOT)
@@ -199,6 +249,143 @@ def check_next_footers(issues: list[str]) -> None:
             )
 
 
+def build_chapter_titles() -> dict[str, str]:
+    """Return ``{filename: H1 title text}`` for each guide chapter.
+
+    Returns:
+        Mapping from chapter filename to its H1 title with the leading
+        ``# `` stripped, e.g.
+        ``{"01-foundations.md": "Chapter 01 -- Foundations: ..."}``.
+    """
+    titles: dict[str, str] = {}
+    for chapter in sorted((REPO_ROOT / "guide").glob("*.md")):
+        first_line = chapter.read_text().split("\n", 1)[0]
+        if first_line.startswith("# "):
+            titles[chapter.name] = first_line[2:]
+    return titles
+
+
+def check_chapter_title_wording(issues: list[str]) -> None:
+    """Verify chapter H1 titles match their entries in README.md and CHEATSHEET.md.
+
+    README.md entries must match the full H1 title. CHEATSHEET.md entries must
+    match the H1 prefix before the colon.
+
+    Args:
+        issues: Accumulator list for pipe-delimited issue strings.
+    """
+    titles = build_chapter_titles()
+
+    readme_text = (REPO_ROOT / "README.md").read_text()
+    for match in README_CHAPTER_LINK.finditer(readme_text):
+        link_title = match.group(1)
+        filename = match.group(2)
+        if filename in titles and link_title != titles[filename]:
+            lineno = readme_text[: match.start()].count("\n") + 1
+            issues.append(
+                f"TITLE_MISMATCH|README.md|{lineno}"
+                f"|Title '{link_title}' does not match H1 '{titles[filename]}'"
+                f"|Update README.md entry for {filename}"
+            )
+
+    if not CHEATSHEET_PATH.is_file():
+        return
+    cheatsheet_text = CHEATSHEET_PATH.read_text()
+    for match in CHEATSHEET_CHAPTER_LINK.finditer(cheatsheet_text):
+        link_title = match.group(1)
+        filename = match.group(2)
+        if filename in titles:
+            h1_prefix = (
+                titles[filename].split(":")[0]
+                if ":" in titles[filename]
+                else titles[filename]
+            )
+            if link_title != h1_prefix:
+                lineno = cheatsheet_text[: match.start()].count("\n") + 1
+                issues.append(
+                    f"TITLE_MISMATCH|CHEATSHEET.md|{lineno}"
+                    f"|Title '{link_title}' does not match"
+                    f" H1 prefix '{h1_prefix}'"
+                    f"|Update CHEATSHEET.md entry for {filename}"
+                )
+
+
+def check_next_footer_title_match(issues: list[str]) -> None:
+    """Verify Next: footer link text matches the target chapter's actual H1.
+
+    Skips chapters without a Next: footer — those are already caught by
+    ``check_next_footers``.
+
+    Args:
+        issues: Accumulator list for pipe-delimited issue strings.
+    """
+    titles = build_chapter_titles()
+    guide_dir = REPO_ROOT / "guide"
+
+    for chapter in sorted(guide_dir.glob("*.md")):
+        if chapter.name == FINAL_CHAPTER:
+            continue
+        content = chapter.read_text()
+        match = NEXT_PATTERN.search(content)
+        if not match:
+            continue
+        link_text = match.group(1)
+        linked_file = match.group(2)
+        if linked_file in titles and link_text != titles[linked_file]:
+            rel = chapter.relative_to(REPO_ROOT)
+            lineno = content[: match.start()].count("\n") + 1
+            issues.append(
+                f"NEXT_TITLE_MISMATCH|{rel}|{lineno}"
+                f"|Next: text '{link_text}' does not match"
+                f" target H1 '{titles[linked_file]}'"
+                f"|Update Next: footer link text"
+            )
+
+
+def check_canonical_terms_registry(issues: list[str]) -> None:
+    """Verify CANONICAL_TERMS dict matches references/canonical-terms.md.
+
+    Parses the registry table and compares each term's dependent locations
+    against the script's ``CANONICAL_TERMS`` dict, reporting any drift.
+
+    Args:
+        issues: Accumulator list for pipe-delimited issue strings.
+    """
+    registry_path = (
+        Path(__file__).resolve().parent.parent / "references" / "canonical-terms.md"
+    )
+    if not registry_path.is_file():
+        issues.append(
+            "REGISTRY_DRIFT|references/canonical-terms.md|0"
+            "|Registry file not found"
+            "|Create references/canonical-terms.md"
+        )
+        return
+
+    registry_text = registry_path.read_text()
+    registry_terms: dict[str, set[str]] = {}
+    for match in REGISTRY_ROW.finditer(registry_text):
+        term = match.group(1)
+        deps = set(re.findall(r"`([^`]+)`", match.group(2)))
+        registry_terms[term] = deps
+
+    script_terms: dict[str, set[str]] = {}
+    for term, paths in CANONICAL_TERMS.items():
+        script_terms[term] = {str(p.relative_to(REPO_ROOT)) for p in paths}
+
+    all_terms = sorted(set(registry_terms) | set(script_terms))
+    for term in all_terms:
+        reg_deps = registry_terms.get(term, set())
+        scr_deps = script_terms.get(term, set())
+        if reg_deps != scr_deps:
+            issues.append(
+                f"REGISTRY_DRIFT|validate.py|0"
+                f"|Dict/registry mismatch for '{term}': "
+                f"script={sorted(scr_deps)}, registry={sorted(reg_deps)}"
+                f"|Sync CANONICAL_TERMS with references/canonical-terms.md"
+            )
+
+
 def main() -> None:
     """Run all cross-reference checks and print results.
 
@@ -214,6 +401,9 @@ def main() -> None:
     check_checklist_references(issues)
     check_canonical_terms(issues)
     check_next_footers(issues)
+    check_chapter_title_wording(issues)
+    check_next_footer_title_match(issues)
+    check_canonical_terms_registry(issues)
 
     for issue in issues:
         print(issue)
