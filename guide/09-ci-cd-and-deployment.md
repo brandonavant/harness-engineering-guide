@@ -142,7 +142,7 @@ service containers. This catches SQL-dialect differences that mocks hide.
 Agent-generated code fails CI for predictable reasons. Knowing the patterns helps you fix them quickly.
 
 **Import ordering and formatting.** The agent writes code that works but may not match your linter's expectations. Fix
-this with pre-commit hooks (Chapter 6) so formatting issues never reach CI.
+this with pre-commit hooks (Chapter 7) so formatting issues never reach CI.
 
 **Missing dependencies.** The agent uses a library in code but does not add it to `requirements.txt` or `package.json`.
 The fix: include dependency management in your CLAUDE.md or subagent definitions. "When you import a new package, add it

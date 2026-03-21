@@ -292,7 +292,8 @@ Some entropy can be detected and fixed automatically. This is the highest-levera
 
 ### Pre-commit hooks
 
-Chapter 6 covered hooks in detail. In the context of entropy management, hooks serve as automatic formatters:
+Chapter 7 covered Claude Code hooks in detail. For git commit-time automation, the
+[pre-commit framework](https://pre-commit.com/) serves as an automatic formatter:
 
 ```yaml
 # .pre-commit-config.yaml
