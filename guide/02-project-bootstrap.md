@@ -314,6 +314,10 @@ Then verify:
 
 Each failure is diagnostic. Fix the CLAUDE.md, not the symptom. Then try again.
 
+### What This Does Not Verify
+
+This hello-world proves that the framework scaffolding works: the build runs, the server starts, and a page renders. It does **not** prove that integration boundaries work — database connectivity, frontend-to-backend communication, vector extensions, auth flows, or external API reachability. Those boundaries are verified by the integration smoke test in [Chapter 07](07-quality-gates.md) (Level 4: Integration Smoke Tests), which you run after every agent phase. Do not mistake a working hello-world for a working stack.
+
 ### Commit the Scaffold
 
 Once the first run succeeds, commit everything. This is your baseline. Every future conversation starts from this state.
