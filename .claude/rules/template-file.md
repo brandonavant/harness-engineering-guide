@@ -27,3 +27,10 @@ After renaming a template file:
 1. Grep `guide/` for the old filename — chapters reference templates by path
 2. Update any matches to use the new filename
 3. Check `templates/docs/README.md` and `templates/contracts/README.md` for the old name
+
+## Init Script Sync
+
+After adding, renaming, or removing any file under `templates/`:
+
+1. Open `scripts/init-project.py` and update the `TEMPLATE_FILES` list to match the current set of files
+2. Verify every file listed in `TEMPLATE_FILES` exists, and every file under `templates/` is listed
