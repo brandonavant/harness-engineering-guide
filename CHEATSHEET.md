@@ -78,7 +78,7 @@ application code.
 **Verify:** Rules autoload when you touch a matching path. Hooks fire on tool events (file edits, shell commands).
 CLAUDE.md stays under 200 lines.
 **Depth:** [Chapter 04 -- Context Architecture](guide/04-context-architecture.md) |
-[Chapter 06 -- Design Intent](guide/06-design-intent.md) |
+[Chapter 06 -- Design Intent Preservation](guide/06-design-intent.md) |
 [Chapter 07 -- Quality Gates](guide/07-quality-gates.md)
 
 ## Phase 5: Orchestrate (Chapter 05)
