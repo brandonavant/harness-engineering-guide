@@ -6,16 +6,26 @@ of the documentation directly determines the quality of the implementation. This
 explains the document cascade -- the order in which documents are created and the
 dependency relationships between them. -->
 
+## Pre-Cascade Input
+
+The interview summary captures the human's intent before any formal specification begins.
+Every document in the cascade builds on it.
+
+| Document                | Purpose                                        | Template                          |
+|-------------------------|------------------------------------------------|-----------------------------------|
+| `interview-summary.md`  | Project vision, persona, stack, constraints    | `interview-summary-template.md`   |
+
 ## The Document Cascade
 
 Documents are created in dependency order. Each document builds on the ones above it.
 
 ```
-PRD (what to build and why)
-  --> Architecture (how to build it, what tech, what constraints)
-    --> UX Spec (screen-by-screen behavior)
-    --> API Contract (endpoint-by-endpoint interface)
-  --> Brand Identity (how it should look and feel)
+Interview Summary (project intent -- input to everything below)
+  --> PRD (what to build and why)
+    --> Architecture (how to build it, what tech, what constraints)
+      --> UX Spec (screen-by-screen behavior)
+      --> API Contract (endpoint-by-endpoint interface)
+    --> Brand Identity (how it should look and feel)
 ```
 
 ## Document List

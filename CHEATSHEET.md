@@ -10,6 +10,15 @@ action, one agent prompt, and one verification step. For depth, follow the chapt
 - Claude Code CLI installed and authenticated
 - Git initialized (or ready to init)
 - A rough idea of what you want to build
+- **Seed the template files** into your project so the prompts below can reference them:
+
+  ```bash
+  curl -O https://raw.githubusercontent.com/brandonavant/harness-engineering-guide/main/scripts/init-project.py
+  python3 init-project.py .
+  ```
+
+  This creates a `templates/` directory in your project with starter files for docs, contracts,
+  harness configuration, and scripts. Every phase below references files from this directory.
 
 ## Phase 1: Interview (Chapter 02)
 
@@ -19,7 +28,7 @@ summary feeds every document that follows.
 > Run a structured interview to understand my project idea. Ask me questions one at a time covering:
 > problem statement, target users, core features for the MVP, tech stack preferences, known
 > constraints, non-goals / out-of-scope items, and deployment target. When done, write the summary
-> to `docs/interview-summary.md` using the template at `templates/docs/interview-summary.md`.
+> to `docs/interview-summary.md` using the template at `templates/docs/interview-summary-template.md`.
 
 **Verify:** `docs/interview-summary.md` exists and covers all seven areas.
 **Depth:** [Chapter 02 -- Project Bootstrap](guide/02-project-bootstrap.md)
