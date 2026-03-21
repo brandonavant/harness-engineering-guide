@@ -43,6 +43,7 @@ stack works end to end.
 > that I can run to verify the stack works. Commit when done.
 
 **Verify:** You can run the hello-world locally and see output. CLAUDE.md exists at the repo root.
+**Note:** This verifies framework scaffolding only, not integration boundaries (DB, frontend↔backend, auth). Those are covered by the integration smoke test in [Chapter 07](guide/07-quality-gates.md).
 **Depth:** [Chapter 02 -- Project Bootstrap](guide/02-project-bootstrap.md)
 
 ## Phase 3: Specify (Chapter 03)
