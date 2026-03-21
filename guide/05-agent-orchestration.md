@@ -112,10 +112,12 @@ Do not modify files. Report findings only.
 `````
 
 Key frontmatter fields: `name` (unique identifier), `description` (routing trigger — see below), `tools`
-(allowlist; omit to inherit all tools), `model` (`haiku`, `sonnet`, `opus`, or `inherit`), `background`
-(`true` to run async), `isolation` (`worktree` for an isolated git worktree), `memory` (persistence scope:
-`user`, `project`, or `local` — path varies by scope), `skills` (list of skills to
-preload into the subagent's context). See the
+(allowlist; omit to inherit all tools), `disallowedTools` (denylist; removed from inherited or specified
+tools), `model` (`haiku`, `sonnet`, `opus`, a full model ID like `claude-sonnet-4-6`, or `inherit` —
+defaults to `inherit`), `permissionMode` (`default`, `acceptEdits`, `dontAsk`, `bypassPermissions`, or
+`plan`), `background` (`true` to run async), `isolation` (`worktree` for an isolated git worktree),
+`memory` (persistence scope: `user`, `project`, or `local` — path varies by scope), `skills` (list of
+skills to preload into the subagent's context). See the
 [official subagent documentation](https://code.claude.com/docs/en/sub-agents) for the full field reference.
 
 **The definition body is the system prompt.** The Markdown below the frontmatter is the subagent's complete
