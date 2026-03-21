@@ -16,7 +16,7 @@ In Claude Code, the harness consists of:
 - **CLAUDE.md** -- The root configuration file that tells the agent what the project is, how to build it, and what rules to follow
 - **Rules** (`.claude/rules/`) -- Scoped instructions that activate when Claude reads files matching their path patterns
 - **Skills** (`.claude/skills/`) -- Reusable instruction sets the agent can invoke for specific tasks
-- **Hooks** -- Pre- and post-action scripts that enforce constraints automatically (linting on save, tests before commit)
+- **Hooks** -- Scripts that run automatically on tool events (linting after file edits, blocking secret writes)
 - **Design documents** (`docs/`) -- PRD, architecture, UX spec, API contracts, brand identity
 - **Contracts** (`contracts/`) -- Formal interface definitions (OpenAPI YAML) that serve as the source of truth between system boundaries
 
@@ -160,7 +160,7 @@ Fixes have different scopes and different persistence levels. Choose the right r
 | This file pattern | `.claude/rules/` with `paths` frontmatter | Persists across conversations | Pattern-specific guidance (e.g., "all migration files must...") |
 | This project | CLAUDE.md | Persists across conversations | Project-wide rules and constraints |
 | This task type | `.claude/skills/` | Invoked on demand | Complex multi-step procedures |
-| This action | Hooks (pre-commit, etc.) | Runs automatically | Hard constraints that must never be violated |
+| This action | Hooks (PreToolUse, PostToolUse, etc.) | Runs automatically | Hard constraints that must never be violated |
 | This knowledge | Memory files | Persists across conversations | Facts, decisions, lessons learned |
 
 ### Concrete Example
@@ -174,7 +174,7 @@ You ask Claude to build a REST endpoint. It works, but it returns `camelCase` fi
 All API response fields use snake_case naming. This is enforced by the OpenAPI contract in contracts/openapi.yaml.
 ```
 
-**Strongest fix**: Add a pre-commit hook that runs contract validation, so snake_case violations are caught automatically before code is committed.
+**Strongest fix**: Add a `PostToolUse` hook on `Edit|Write` that runs contract validation, so snake_case violations are caught automatically after every file edit.
 
 Each rung of the ladder makes the fix more durable. Over the course of a project, dozens of these accumulated fixes transform a bare harness into a finely tuned one that produces correct output on the first try.
 

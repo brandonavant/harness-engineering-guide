@@ -67,16 +67,16 @@ application code.
 >
 > 1. Path-scoped rules in `.claude/rules/` for backend, frontend, testing, and database conventions
 > 2. A design-intent skill in `.claude/skills/` that enforces brand identity on UI work
-> 3. Hook configurations for linting and type-checking on pre-commit
+> 3. Hook configurations in `.claude/settings.json` for linting and type-checking after file edits
 > 4. Update CLAUDE.md to reference these new harness files
 > 5. A security-review skill in `.claude/skills/` covering input validation, parameterized queries,
 >    auth checks, and OWASP Top 10 awareness
-> 6. A pre-commit hook that blocks commits containing hardcoded secrets (API keys, tokens, passwords)
+> 6. A `PreToolUse` hook that blocks file writes containing hardcoded secrets (API keys, tokens, passwords)
 >
 > Do not write application code yet — this phase is infrastructure only.
 
-**Verify:** Rules autoload when you touch a matching path. Hooks fire on commit. CLAUDE.md stays under
-200 lines.
+**Verify:** Rules autoload when you touch a matching path. Hooks fire on tool events (file edits, shell commands).
+CLAUDE.md stays under 200 lines.
 **Depth:** [Chapter 04 -- Context Architecture](guide/04-context-architecture.md) |
 [Chapter 06 -- Design Intent](guide/06-design-intent.md) |
 [Chapter 07 -- Quality Gates](guide/07-quality-gates.md)

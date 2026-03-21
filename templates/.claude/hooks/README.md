@@ -4,52 +4,70 @@
 Hooks are deterministic scripts that run automatically on tool events (before/after
 file edits, command execution, etc.). Unlike skills (which rely on the agent choosing
 to invoke them), hooks fire mechanically every time. Use them for guardrails that must
-never be skipped: linting after edits, blocking secret commits, enforcing file boundaries. -->
+never be skipped: linting after edits, blocking secret writes, enforcing file boundaries. -->
 
 ## What Are Hooks?
 
-Hooks are shell commands configured in `.claude/settings.json` that run on specific
-Claude Code tool events. They execute outside the LLM -- they are deterministic scripts,
-not AI-generated responses. This makes them reliable for enforcement tasks.
+Hooks are commands configured in `.claude/settings.json` that run on specific Claude Code tool
+events. They execute outside the LLM -- they are deterministic scripts, not AI-generated responses.
+This makes them reliable for enforcement tasks.
 
-**Hook types:**
-- `PreToolUse` -- runs BEFORE a tool executes (can block the action)
-- `PostToolUse` -- runs AFTER a tool executes (can report issues)
+**Key event types:**
+- `PreToolUse` -- runs BEFORE a tool executes (can block the action with exit code 2)
+- `PostToolUse` -- runs AFTER a tool succeeds (output added to agent context)
+- `PostToolUseFailure` -- runs AFTER a tool fails
 
-**Matching:** Hooks specify a `matcher` (the tool name) and optional `filePath` patterns
-to scope when they fire.
+Other events include `Stop`, `SubagentStop`, `Notification`, `UserPromptSubmit`, and more. See the
+[official hooks documentation](https://code.claude.com/docs/en/hooks) for the complete list.
+
+**Matching:** Hooks specify a `matcher` (a regex pattern matched against the tool name) to scope
+when they fire. For example, `Edit|Write` matches file edit tools, `Bash` matches shell commands,
+and `mcp__.*` matches any MCP tool.
 
 ## Configuration
 
 Add hooks to `.claude/settings.json`:
 
+**[CUSTOMIZE]** Replace the linter commands, directory paths, and script paths below with your
+project's actual tools and structure.
+
 ```json
 {
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hook": "cp \"$CLAUDE_FILE_PATH\" \"$CLAUDE_FILE_PATH.bak\" 2>/dev/null || true",
-        "description": "Backup file before modification"
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
-        "filePath": "\\.py$",
-        "hook": "cd apps/backend && ruff check --fix \"$CLAUDE_FILE_PATH\" 2>&1 | tail -5",
-        "description": "Auto-lint Python files after edit"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd apps/backend && ruff check --fix . 2>&1 | head -20",
+            "timeout": 30,
+            "statusMessage": "Linting Python files..."
+          }
+        ]
       },
       {
         "matcher": "Edit|Write",
-        "filePath": "\\.(ts|tsx)$",
-        "hook": "cd apps/frontend && npx tsc --noEmit 2>&1 | head -20",
-        "description": "Type-check TypeScript files after edit"
-      },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd apps/frontend && npx tsc --noEmit 2>&1 | head -20",
+            "timeout": 60,
+            "statusMessage": "Type-checking TypeScript..."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
       {
-        "matcher": "Edit|Write",
-        "hook": "grep -rn 'AKIA\\|sk-\\|password\\s*=' \"$CLAUDE_FILE_PATH\" && echo 'WARNING: Possible hardcoded secret detected' || true",
-        "description": "Scan for hardcoded secrets after any file edit"
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "scripts/check-for-secrets.sh",
+            "statusMessage": "Scanning for hardcoded secrets..."
+          }
+        ]
       }
     ]
   }
@@ -58,53 +76,57 @@ Add hooks to `.claude/settings.json`:
 
 ## Hook Examples
 
-### Pre-Edit: Backup Before Modification
+### PostToolUse: Lint Python Files
 
-Creates a `.bak` copy of any file before Claude edits it. Useful during early development
-when you want an easy rollback path.
+Runs ruff on the backend directory after any file edit. Catches lint errors before they
+accumulate. The `--fix` flag auto-corrects simple issues.
 
 ```json
 {
   "matcher": "Edit|Write",
-  "hook": "cp \"$CLAUDE_FILE_PATH\" \"$CLAUDE_FILE_PATH.bak\" 2>/dev/null || true"
+  "hooks": [
+    {
+      "type": "command",
+      "command": "cd apps/backend && ruff check --fix . 2>&1 | tail -5",
+      "timeout": 30
+    }
+  ]
 }
 ```
 
-### Post-Edit: Lint Python Files
+### PostToolUse: Type-Check TypeScript
 
-Runs ruff on any Python file immediately after it is modified. Catches lint errors before
-they accumulate. The `--fix` flag auto-corrects simple issues.
+Runs the TypeScript compiler in check mode after any file edit. Catches type errors
+immediately instead of discovering them at build time.
 
 ```json
 {
   "matcher": "Edit|Write",
-  "filePath": "\\.py$",
-  "hook": "cd apps/backend && ruff check --fix \"$CLAUDE_FILE_PATH\" 2>&1 | tail -5"
+  "hooks": [
+    {
+      "type": "command",
+      "command": "cd apps/frontend && npx tsc --noEmit 2>&1 | head -20",
+      "timeout": 60
+    }
+  ]
 }
 ```
 
-### Post-Edit: Type-Check TypeScript
+### PreToolUse: Block Secret Writes
 
-Runs the TypeScript compiler in check mode after any `.ts` or `.tsx` edit. Catches type
-errors immediately instead of discovering them at build time.
-
-```json
-{
-  "matcher": "Edit|Write",
-  "filePath": "\\.(ts|tsx)$",
-  "hook": "cd apps/frontend && npx tsc --noEmit 2>&1 | head -20"
-}
-```
-
-### Post-Edit: Secret Detection
-
-Scans edited files for patterns that look like hardcoded secrets (AWS keys, API keys,
-password assignments). Prints a warning if found. Does not block the edit -- just alerts.
+Inspects proposed file content before it is written. The hook receives tool input as JSON on
+stdin (including `tool_input.content` for Write). Exit code 2 blocks the write; exit 0 allows it.
 
 ```json
 {
-  "matcher": "Edit|Write",
-  "hook": "grep -rn 'AKIA\\|sk-\\|password\\s*=' \"$CLAUDE_FILE_PATH\" && echo 'WARNING: Possible hardcoded secret detected' || true"
+  "matcher": "Write",
+  "hooks": [
+    {
+      "type": "command",
+      "command": "scripts/check-for-secrets.sh",
+      "statusMessage": "Scanning for hardcoded secrets..."
+    }
+  ]
 }
 ```
 
@@ -112,7 +134,7 @@ password assignments). Prints a warning if found. Does not block the edit -- jus
 
 | Mechanism | Timing | Deterministic? | Use For |
 |-----------|--------|----------------|---------|
-| **Hooks** | Every tool event | Yes | Linting, type-checking, secret scanning, file backups |
+| **Hooks** | Every tool event | Yes | Linting, type-checking, secret scanning |
 | **Skills** | Agent invokes explicitly | No (agent must choose) | Checklists, design review, contract validation |
 | **CI** | On push / PR | Yes | Full test suite, build verification, integration tests |
 
@@ -121,17 +143,39 @@ password assignments). Prints a warning if found. Does not block the edit -- jus
 - If it requires reading context and making assessments: **skill** (make it mandatory in CLAUDE.md).
 - If it takes more than a few seconds or needs the full codebase: **CI**.
 
-## Environment Variables Available to Hooks
+## Hook Input and Output
 
-| Variable | Description |
-|----------|-------------|
-| `CLAUDE_FILE_PATH` | Absolute path of the file being edited |
-| `CLAUDE_TOOL_NAME` | Name of the tool being used (Edit, Write, Bash, etc.) |
+Hooks receive JSON on stdin with context about the tool invocation:
+
+```json
+{
+  "session_id": "abc123",
+  "cwd": "/path/to/project",
+  "tool_name": "Edit",
+  "tool_input": {
+    "file_path": "/path/to/file.py",
+    "old_string": "...",
+    "new_string": "..."
+  }
+}
+```
+
+**Exit codes:**
+
+| Exit Code | Meaning | Behavior |
+|-----------|---------|----------|
+| **0** | Success | Stdout added to agent context (parsed as JSON if valid) |
+| **2** | Block | For PreToolUse: blocks the tool call. Stderr shown as error. |
+| **Other** | Non-blocking error | Stderr shown in verbose mode. Execution continues. |
+
+The `$CLAUDE_PROJECT_DIR` environment variable provides the project root path.
 
 ## Tips
 
 - Keep hooks fast (under 2 seconds). Slow hooks degrade the development experience.
-- Use `|| true` at the end if the hook should warn but not block.
+- For PostToolUse hooks, exit 0 so output reaches the agent. Use `|| true` if the check itself
+  might return a non-zero exit.
 - Pipe output through `head` or `tail` to keep hook output concise.
-- Test hooks manually before adding them to settings: run the command with a real file path.
+- Test hooks manually before adding them: run the command and pipe sample JSON to stdin.
 - Hooks run in the project root directory. Use `cd` to change to subdirectories if needed.
+- Set explicit `timeout` values to prevent runaway commands (default is 600 seconds).

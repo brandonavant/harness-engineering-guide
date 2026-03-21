@@ -34,8 +34,9 @@ accumulating errors.
 
 ### Level 1: Hooks — Automatic, After Every Edit
 
-Hooks are scripts that run automatically after Claude Code edits a file. They are configured in `.claude/hooks/` and
-execute without agent intervention. The agent sees the output — including errors — and can react immediately.
+Hooks are scripts that run automatically when Claude Code uses a tool. They are configured in `.claude/settings.json`
+(or `~/.claude/settings.json` for global hooks) and execute outside the LLM — they are deterministic scripts, not
+AI-generated responses. The agent sees the output — including errors — and can react immediately.
 
 **What hooks are good for:**
 
@@ -52,19 +53,26 @@ execute without agent intervention. The agent sees the output — including erro
 
 **Hook configuration:**
 
-Claude Code hooks are defined in `.claude/hooks/` or in your project's Claude Code settings. They specify a trigger (
-file pattern), a command, and an error behavior.
+Claude Code hooks are defined in `.claude/settings.json`. They specify an event type (when to fire), a `matcher` (which
+tool triggers the hook), and one or more handler commands. Hooks receive context about the tool invocation as JSON on
+stdin and use exit codes to signal results: exit 0 for success (output added to the agent's context), exit 2 to block
+the action (for `PreToolUse` hooks), or any other exit code for a non-blocking error.
 
 **Example: Python linting after every edit**
 
 ```json
 {
   "hooks": {
-    "afterEdit": [
+    "PostToolUse": [
       {
-        "match": "**/*.py",
-        "command": "ruff check --fix ${file}",
-        "onError": "warn"
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd apps/backend && ruff check --fix . 2>&1 | head -20",
+            "timeout": 30
+          }
+        ]
       }
     ]
   }
@@ -76,11 +84,16 @@ file pattern), a command, and an error behavior.
 ```json
 {
   "hooks": {
-    "afterEdit": [
+    "PostToolUse": [
       {
-        "match": "**/*.{ts,tsx}",
-        "command": "tsc --noEmit --pretty",
-        "onError": "warn"
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd apps/frontend && npx tsc --noEmit --pretty 2>&1 | head -20",
+            "timeout": 60
+          }
+        ]
       }
     ]
   }
@@ -446,13 +459,22 @@ Invoke after implementing any of:
 
 **Secret scanning hook:**
 
+A `PreToolUse` hook on `Write` can inspect file content before it is written. The hook receives the proposed content as
+JSON on stdin (in `tool_input.content`). Exit code 2 blocks the write; exit 0 allows it.
+
 ```json
 {
   "hooks": {
-    "preCommit": [
+    "PreToolUse": [
       {
-        "command": "git diff --cached --diff-filter=d | grep -iE '(api_key|secret|password|token)\\s*=\\s*[\"\\x27][^\"\\x27]+' && echo 'BLOCKED: Possible secret in commit' && exit 1 || exit 0",
-        "onError": "block"
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "scripts/check-for-secrets.sh",
+            "statusMessage": "Scanning for hardcoded secrets..."
+          }
+        ]
       }
     ]
   }
@@ -488,38 +510,56 @@ review and potentially rewriting endpoints. Front-load the investment.
 
 ## Hook Configuration in Detail
 
-Hooks in Claude Code run scripts at defined trigger points. The key trigger points:
+Hooks in Claude Code run scripts at defined trigger points based on tool events. They are configured in
+`.claude/settings.json`. The event types most relevant to quality gates:
 
-**afterEdit** — Runs after Claude edits a file. Best for: linting, formatting, quick type checks.
+**PostToolUse** — Runs after a tool succeeds. Best for: linting, formatting, quick type checks after file edits. The
+`matcher` field specifies which tool triggers the hook (e.g., `Edit|Write` for file modifications). Output is added to
+the agent's context. PostToolUse hooks cannot block — the tool already executed.
 
-**preCommit** — Runs before Claude creates a commit. Best for: secret scanning, test execution, build verification.
+**PreToolUse** — Runs before a tool executes. Can block the action when the hook returns exit code 2. Best for:
+preventing dangerous operations, scanning for secrets before a file is written.
+
+For a complete list of hook events (including `Notification`, `Stop`, `SubagentStop`, and others), see the
+[official hooks documentation](https://code.claude.com/docs/en/hooks).
 
 **Configuration patterns:**
 
 ```json
 {
   "hooks": {
-    "afterEdit": [
+    "PostToolUse": [
       {
-        "match": "**/*.py",
-        "command": "ruff check --fix ${file} && ruff format ${file}",
-        "onError": "warn"
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd apps/backend && ruff check --fix . && ruff format . 2>&1 | head -20",
+            "timeout": 30
+          }
+        ]
       },
       {
-        "match": "**/*.{ts,tsx}",
-        "command": "npx eslint --fix ${file}",
-        "onError": "warn"
-      },
-      {
-        "match": "**/*.{ts,tsx}",
-        "command": "npx tsc --noEmit --pretty 2>&1 | head -20",
-        "onError": "warn"
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd apps/frontend && npx tsc --noEmit --pretty 2>&1 | head -20",
+            "timeout": 60
+          }
+        ]
       }
     ],
-    "preCommit": [
+    "PreToolUse": [
       {
-        "command": "pytest apps/backend/tests/ -x -q --tb=short",
-        "onError": "block"
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "scripts/check-for-secrets.sh",
+            "statusMessage": "Scanning for secrets..."
+          }
+        ]
       }
     ]
   }
@@ -529,16 +569,16 @@ Hooks in Claude Code run scripts at defined trigger points. The key trigger poin
 **Design principles for hooks:**
 
 1. **Keep them fast.** Hooks run frequently. A hook that takes 10 seconds disrupts the flow. Target under 2 seconds for
-   afterEdit hooks, under 30 seconds for preCommit hooks.
+   PostToolUse hooks. Set explicit `timeout` values to prevent runaway commands.
 
-2. **Use `warn` for non-critical issues.** The agent sees the warning and can fix it. Use `block` only for issues that
-   must be fixed before proceeding (secrets in commits, failing critical tests).
+2. **Use PostToolUse for advisory checks.** The agent sees the output and can fix issues. Use PreToolUse with exit
+   code 2 only for checks that must pass before the action proceeds (e.g., blocking a file write that contains secrets).
 
-3. **Include remediation in error output.** The agent reads hook error messages. A good error message tells the agent
-   exactly what to do. A bad error message requires the agent to investigate.
+3. **Include remediation in error output.** The agent reads hook output. A good error message tells the agent exactly
+   what to do. A bad error message requires the agent to investigate.
 
-4. **Scope narrowly with `match` patterns.** A Python linter should not run when the agent edits a TypeScript file. Use
-   file patterns to trigger hooks only for relevant files.
+4. **Scope with `matcher` patterns.** The `matcher` is a regex against the tool name. `Edit|Write` targets file
+   modifications. `Bash` targets shell commands. `mcp__.*` targets MCP tool calls.
 
 5. **Auto-fix when possible.** `ruff check --fix` and `eslint --fix` correct issues automatically. The agent does not
    need to manually fix formatting or import ordering if the tool can do it.
@@ -547,8 +587,8 @@ Hooks in Claude Code run scripts at defined trigger points. The key trigger poin
 
 ## What the Human Should Do
 
-1. **Set up hooks early.** Before the first agent session, configure afterEdit hooks for linting and formatting. This is
-   15 minutes of setup that prevents hundreds of manual corrections.
+1. **Set up hooks early.** Before the first agent session, configure `PostToolUse` hooks for linting and formatting. This
+   is 15 minutes of setup that prevents hundreds of manual corrections.
 
 2. **Write the integration smoke test.** Start with health checks and auth flow. Expand as features land. Run it after
    every agent phase — this is your responsibility, not the agent's.
@@ -569,7 +609,7 @@ Hooks in Claude Code run scripts at defined trigger points. The key trigger poin
 
 ## What the Agent Should Do
 
-1. **Fix hook failures immediately.** When an afterEdit hook reports an error, fix it in the next edit. Do not
+1. **Fix hook failures immediately.** When a `PostToolUse` hook reports an error, fix it in the next edit. Do not
    accumulate lint errors across a phase.
 
 2. **Run tests incrementally.** After changing a module, run its test file. After completing a phase, run the full
