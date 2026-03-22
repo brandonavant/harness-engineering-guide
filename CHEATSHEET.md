@@ -17,8 +17,7 @@ action, one agent prompt, and one verification step. For depth, follow the chapt
   python3 init-project.py .
   ```
 
-  This creates a `templates/` directory in your project with starter files for docs, contracts,
-  harness configuration, and scripts. Every phase below references files from this directory.
+  This seeds `templates/` with starter files for docs, contracts, harness config, and scripts.
 
 ## Phase 1: Interview (Chapter 02)
 
@@ -42,8 +41,7 @@ stack works end to end.
 > initialize the tech stack, write a CLAUDE.md under 200 lines, and produce a minimal hello-world
 > that I can run to verify the stack works. Commit when done.
 
-**Verify:** You can run the hello-world locally and see output. CLAUDE.md exists at the repo root.
-**Note:** This verifies framework scaffolding only, not integration boundaries (DB, frontend↔backend, auth). Those are covered by the integration smoke test in [Chapter 07](guide/07-quality-gates.md).
+**Verify:** You can run the hello-world locally and see output. CLAUDE.md exists at the repo root. (This verifies scaffolding only — integration boundaries are covered by the smoke test in [Chapter 07](guide/07-quality-gates.md).)
 **Depth:** [Chapter 02 -- Project Bootstrap](guide/02-project-bootstrap.md)
 
 ## Phase 3: Specify (Chapter 03)
@@ -59,7 +57,8 @@ stack works end to end.
 > 4. `contracts/api.yaml` — OpenAPI contract
 > 5. `docs/brand-identity.md` — Visual language and component conventions
 > 6. `.claude/skills/doc-review/SKILL.md` — Skill that validates spec documents against the interview
->    summary for completeness and consistency
+>    summary for completeness and consistency (see [Section 3.9](guide/03-specification-phase.md) for
+>    what a skill is and how to build one)
 >
 > Use the corresponding templates in `templates/docs/` and `templates/contracts/`. Each document
 > should reference the ones before it, not reinvent details.
@@ -76,8 +75,11 @@ application code.
 > Based on the specification documents in `docs/` and `contracts/`, create the harness:
 >
 > 1. Path-scoped rules in `.claude/rules/` for backend, frontend, testing, and database conventions
+>    (see [Chapter 04 Tier 2](guide/04-context-architecture.md) for rule format and autoloading behavior)
 > 2. A design-intent skill in `.claude/skills/` that enforces brand identity on UI work
+>    (see [Chapter 06 Layer 3](guide/06-design-intent.md) for the design-enforcement skill pattern)
 > 3. Hook configurations in `.claude/settings.json` for linting and type-checking after file edits
+>    (see [Chapter 07 Level 1](guide/07-quality-gates.md) for hook types and settings.json schema)
 > 4. Update CLAUDE.md to reference these new harness files
 > 5. A security-review skill in `.claude/skills/` covering input validation, parameterized queries,
 >    auth checks, and OWASP Top 10 awareness
@@ -87,22 +89,18 @@ application code.
 
 **Verify:** Rules autoload when you touch a matching path. Hooks fire on tool events (file edits, shell commands).
 CLAUDE.md stays under 200 lines.
-**Depth:** [Chapter 04 -- Context Architecture](guide/04-context-architecture.md) |
-[Chapter 06 -- Design Intent Preservation](guide/06-design-intent.md) |
-[Chapter 07 -- Quality Gates](guide/07-quality-gates.md)
+**Depth:** [Chapter 04](guide/04-context-architecture.md) | [Chapter 06](guide/06-design-intent.md) | [Chapter 07](guide/07-quality-gates.md)
 
 ## Phase 5: Orchestrate (Chapter 05)
 
-**You:** Define agent boundaries and shared contracts. Skip this phase for single-domain projects where
-one agent session handles all work.
+**You:** Define agent boundaries and shared contracts. Skip for single-domain projects.
 
 > Set up multi-agent orchestration for this project:
 >
 > 1. Create subagent definitions in `.claude/agents/` — one per domain (e.g., backend, frontend,
->    data). Use `templates/.claude/agents/agent-template.md` as the starting point. Each definition
->    must declare its territory (which files/dirs it owns) and its read-only dependencies.
-> 2. Place shared type definitions and contracts in `contracts/` so every subagent reads from the
->    same source of truth.
+>    data). Use `templates/.claude/agents/agent-template.md` as the starting point. Each must
+>    declare its territory (files/dirs it owns) and read-only dependencies.
+> 2. Place shared type definitions and contracts in `contracts/` so every subagent reads from the same source of truth.
 > 3. Add a contract governance rule to CLAUDE.md: changes to `contracts/` require human approval.
 > 4. Verify that no two agent territories overlap on the same files.
 
@@ -118,8 +116,7 @@ referenced by CLAUDE.md.
 > phases (aim for 3-6). Each phase should be independently testable and produce a working increment.
 > Write the phase plan to `docs/phase-plan.md` with acceptance criteria for each phase.
 
-**Verify:** Each phase has clear boundaries, acceptance criteria, and no circular dependencies.
-**Depth:** [Chapter 08 -- Implementation](guide/08-implementation.md)
+**Verify:** Each phase has clear boundaries, acceptance criteria, and no circular dependencies. **Depth:** [Chapter 08 -- Implementation](guide/08-implementation.md)
 
 ## Phase 7: Implement — Repeat Per Phase (Chapter 08)
 
@@ -139,15 +136,12 @@ referenced by CLAUDE.md.
 > **Acceptance criteria:** All items from the phase plan pass. The integration smoke test passes.
 > No regressions in prior phases.
 
-**Verify:** Run `templates/scripts/integration-smoke-test.sh` against real services — you run it, not
-the agent. Walk the [phase completion checklist](checklists/phase-completion.md) (11 items). If you
-corrected the same pattern twice during this phase, build a skill before starting the next one.
+**Verify:** Run `templates/scripts/integration-smoke-test.sh` (you, not the agent). Walk the [phase completion checklist](checklists/phase-completion.md). Corrected the same pattern twice? Build a skill before starting the next phase.
 **Depth:** [Chapter 08 -- Implementation](guide/08-implementation.md)
 
 ## Phase 8: Ship (Chapter 09)
 
-**You:** Set up CI/CD and deployment configuration. The agent writes the pipeline; you execute the
-deployment.
+**You:** Set up CI/CD and deployment config. The agent writes the pipeline; you execute the deployment.
 
 > Create the CI/CD pipeline and deployment configuration:
 >
@@ -187,34 +181,20 @@ Review the [context reset checklist](checklists/context-reset.md) for session hy
 
 These cross-cutting concerns apply throughout the lifecycle, not to a single phase.
 
-**Feedback loop** — When something goes wrong, fix the environment, not just the code. Escalate
-through the feedback ladder: conversation correction → path-scoped rule → CLAUDE.md update → skill →
-hook → memory. See [Chapter 01 Section 1.5](guide/01-foundations.md).
+**Feedback loop** — Fix the environment, not just the code. Escalate: conversation correction → rule → CLAUDE.md → skill → hook → memory. [Chapter 01 Section 1.5](guide/01-foundations.md).
 
-**Session hygiene** — Run `/clear` between tasks and between phases. If you correct the agent twice
-for the same issue, stop and build a rule or skill. Use `/compact` with focus instructions to preserve
-key context. See the [context reset checklist](checklists/context-reset.md).
+**Session hygiene** — Run `/clear` between tasks and phases. Correct the agent twice for the same issue? Stop and build a rule or skill. [Context reset checklist](checklists/context-reset.md).
 
-**Integration gate** — Run `templates/scripts/integration-smoke-test.sh` after every phase, after
-merging worktree branches, and after infrastructure changes. You run it, not the agent. This is the
-single most important practice in the guide. See [Chapter 08](guide/08-implementation.md).
+**Integration gate** — Run `templates/scripts/integration-smoke-test.sh` after every phase, after merging worktree branches, and after infrastructure changes. You run it, not the agent. [Chapter 08](guide/08-implementation.md).
 
-**Security** — Invoke the security-review skill for any code touching input handling, database
-queries, authentication, file uploads, or external APIs. The pre-commit secret-scanning hook is a
-backstop, not a replacement for review. See [Chapter 07](guide/07-quality-gates.md).
+**Security** — Invoke the security-review skill for code touching input handling, auth, database queries, file uploads, or external APIs. [Chapter 07](guide/07-quality-gates.md).
 
-**Reactive skill-building** — After each phase ask: "Did I correct the same thing last time?" If yes,
-build a skill now. Early phases produce 2-3 new skills; late phases produce nearly none. That
-compounding effect is the goal.
+**Reactive skill-building** — After each phase: "Did I correct the same thing last time?" If yes, build a skill now. Early phases produce 2-3 new skills; late phases produce nearly none.
 
 ---
 
 ## Further Reading
 
-- [Chapter 01 -- Foundations](guide/01-foundations.md) — The harness engineering paradigm and feedback loop
-- [Chapter 11 -- Failure Modes](guide/11-failure-modes.md) — What goes wrong and how to fix it
-- [Project Kickoff checklist](checklists/project-kickoff.md) — Pre-flight checks before starting a new project
-- [Phase Completion checklist](checklists/phase-completion.md) — 11-item gate to run after each implementation phase
-- [Context Reset checklist](checklists/context-reset.md) — Session hygiene when switching tasks or hitting context limits
-- [Pre-Merge checklist](checklists/pre-merge.md) — Final verification before merging a feature branch
+- [Chapter 01 -- Foundations](guide/01-foundations.md) | [Chapter 11 -- Failure Modes](guide/11-failure-modes.md)
+- Checklists: [project-kickoff](checklists/project-kickoff.md) | [phase-completion](checklists/phase-completion.md) | [context-reset](checklists/context-reset.md) | [pre-merge](checklists/pre-merge.md)
 - [`templates/`](templates/) — Starter files for CLAUDE.md, spec documents, contracts, and harness configuration
