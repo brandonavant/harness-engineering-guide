@@ -1,16 +1,8 @@
----
-paths:
-  - ".claude/skills/**"
-  - ".claude/rules/**"
-  - ".claude/agents/**"
-  - ".claude/hooks/**"
-  - "**/CLAUDE.md"
-  - "**/settings.json"
-  - "**/settings.local.json"
-  - "templates/.claude/**"
----
-
 # Harness File Format Enforcement
+
+> **Note for human engineers**: This rule intentionally has no `paths:` frontmatter. Path-scoped rules only inject into
+> context when Claude reads a matching file — too late for a pre-task behavioral policy. Without `paths:`, it loads
+> globally at session start.
 
 Before creating or modifying any Claude Code harness file, you MUST fetch the relevant official documentation
 page and verify your changes follow the exact format prescribed there. Do not rely on training knowledge,
