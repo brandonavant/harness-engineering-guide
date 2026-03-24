@@ -196,6 +196,19 @@ paths:
 **Antipattern:** Do not create one rule file per source file. Rule files scope to directories and patterns, not
 individual files. If you need that level of granularity, the rule probably belongs as a code comment.
 
+**Contextual rules vs. behavioral policies:** Not every rule belongs behind a `paths:` gate. The distinction:
+
+- **Contextual rules** (style, conventions, consistency checks) — use `paths:` so they inject only when the agent
+  reads a matching file. Example: a backend coding-standards rule scoped to `apps/backend/**`.
+- **Behavioral policies** (pre-task instructions, doc-fetching requirements, safety constraints) — omit `paths:` so
+  they load globally at session start. Example: a rule that requires fetching official documentation before modifying
+  any harness file.
+
+A path-scoped behavioral policy can silently fail to apply when it matters most. Because it only injects after the
+agent opens a matching file — which is typically mid-task — it misses the planning phase entirely. The rule still
+fires during execution, but by then the agent's approach is already set. If a rule needs to shape *how the agent
+thinks about work* before it touches any files, that rule must be global.
+
 ---
 
 ### Tier 3: Skills — Loaded on Demand
