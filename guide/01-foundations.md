@@ -14,7 +14,7 @@ Harness engineering is the discipline of designing environments that make AI age
 In Claude Code, the harness consists of:
 
 - **CLAUDE.md** -- The root configuration file that tells the agent what the project is, how to build it, and what rules to follow
-- **Rules** (`.claude/rules/`) -- Scoped instructions that activate when Claude reads files matching their path patterns
+- **Rules** (`.claude/rules/`) -- Instructions that load on file pattern match or globally at session start
 - **Skills** (`.claude/skills/`) -- Reusable instruction sets the agent can invoke for specific tasks
 - **Hooks** -- Scripts that run automatically on tool events (linting after file edits, blocking secret writes)
 - **Design documents** (`docs/`) -- PRD, architecture, UX spec, API contracts, brand identity
@@ -82,7 +82,7 @@ This has practical implications for everything in this guide:
 Not all context is equal. There is a rough priority order:
 
 1. **CLAUDE.md** -- Always loaded. Keep it lean.
-2. **Active rules** -- Loaded when file patterns match. Use scoping to avoid loading rules that do not apply.
+2. **Active rules** -- Loaded when file patterns match, or globally at session start for rules without path patterns.
 3. **Conversation history** -- Grows with every turn. Long conversations accumulate stale context.
 4. **Files read into context** -- The agent reads files as needed. Large files consume significant context.
 5. **Tool outputs** -- Search results, build output, test results all consume context.
@@ -162,6 +162,10 @@ Fixes have different scopes and different persistence levels. Choose the right r
 | This task type | `.claude/skills/` | Invoked on demand | Complex multi-step procedures |
 | This action | Hooks (PreToolUse, PostToolUse, etc.) | Runs automatically | Hard constraints that must never be violated |
 | This knowledge | Memory files | Persists across conversations | Facts, decisions, lessons learned |
+
+Rules without `paths` frontmatter load globally at session start — use these for behavioral policies that must
+influence the agent's approach before it opens any files. See [Chapter 04](04-context-architecture.md) for the full
+distinction between contextual rules and behavioral policies.
 
 ### Concrete Example
 

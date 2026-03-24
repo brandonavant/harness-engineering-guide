@@ -24,7 +24,7 @@ The repo contains no application code, no build system, and no tests. It is orga
 The guide teaches a **five-tier context hierarchy** (Chapter 4) that is central to all recommendations:
 
 1. **CLAUDE.md** — Always loaded, under 200 lines, serves as a map not an encyclopedia
-2. **Path-scoped rules** (`.claude/rules/`) — Autoloaded on file pattern match
+2. **Rules** (`.claude/rules/`) — Path-scoped on file pattern match, or global at session start when `paths` is omitted
 3. **Skills** (`.claude/skills/`) — Loaded on demand for specific work types
 4. **Discoverable docs** (`docs/`, `contracts/`) — Read through Tier 1 pointers
 5. **Memory** — Persistent across sessions for institutional knowledge
