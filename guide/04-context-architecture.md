@@ -204,8 +204,9 @@ individual files. If you need that level of granularity, the rule probably belon
   they load globally at session start. Example: a rule that requires fetching official documentation before modifying
   any harness file.
 
-A path-scoped behavioral policy silently fails. It only injects after the agent has already opened a matching file,
-which is typically mid-task — too late to influence planning or approach. If a rule needs to shape *how the agent
+A path-scoped behavioral policy can silently fail to apply when it matters most. Because it only injects after the
+agent opens a matching file — which is typically mid-task — it misses the planning phase entirely. The rule still
+fires during execution, but by then the agent's approach is already set. If a rule needs to shape *how the agent
 thinks about work* before it touches any files, that rule must be global.
 
 ---
