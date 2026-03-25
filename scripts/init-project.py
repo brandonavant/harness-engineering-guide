@@ -39,7 +39,8 @@ TEMPLATE_FILES: list[str] = [
     "templates/.claude/agents/agent-template.md",
     "templates/.claude/skills/design-enforcement/SKILL.md",
     "templates/.claude/skills/example-checklist/SKILL.md",
-    "templates/.claude/hooks/README.md",
+    "templates/.claude/README.md",
+    "templates/.claude/settings.json",
     # CI workflow
     "templates/.github/workflows/ci.yml",
     # Scripts
