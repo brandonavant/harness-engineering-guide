@@ -1,0 +1,40 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd apps/backend && ruff check --fix . 2>&1 | head -20",
+            "timeout": 30,
+            "statusMessage": "Linting Python files..."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd apps/frontend && npx tsc --noEmit 2>&1 | head -20",
+            "timeout": 60,
+            "statusMessage": "Type-checking TypeScript..."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "scripts/check-for-secrets.sh",
+            "statusMessage": "Scanning for hardcoded secrets..."
+          }
+        ]
+      }
+    ]
+  }
+}
