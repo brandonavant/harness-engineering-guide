@@ -87,7 +87,7 @@ def main() -> None:
         with open(DATA_DIR / LOG_FILE, "a") as f:
             f.write(json.dumps(entry, default=str) + "\n")
 
-    except Exception:
+    except (OSError, TypeError, ValueError):
         pass
 
 

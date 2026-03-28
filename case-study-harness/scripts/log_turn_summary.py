@@ -64,10 +64,10 @@ def main() -> None:
         entry = build_entry(session_id, description)
 
         os.makedirs(DATA_DIR, exist_ok=True)
-        with open(DATA_DIR / LOG_FILE, "a") as f:
-            f.write(json.dumps(entry, default=str) + "\n")
+        with open(DATA_DIR / LOG_FILE, "a") as file:
+            file.write(json.dumps(entry, default=str) + "\n")
 
-    except Exception:
+    except (OSError, TypeError, ValueError):
         pass
 
 

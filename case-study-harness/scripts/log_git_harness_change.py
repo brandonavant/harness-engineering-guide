@@ -144,7 +144,7 @@ def main() -> None:
 
     except subprocess.CalledProcessError:
         pass
-    except Exception:
+    except (OSError, TypeError, ValueError):
         print("case-study-harness: unexpected error in git hook logger", file=sys.stderr)
 
 
