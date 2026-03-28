@@ -40,7 +40,7 @@ stack works end to end.
 
 > Bootstrap this project based on `docs/interview-summary.md`. Create the directory structure,
 > initialize the tech stack, write a CLAUDE.md under 200 lines, and produce a minimal hello-world
-> that I can run to verify the stack works. Commit when done.
+> that I can run to verify the stack works.
 
 **Verify:** You can run the hello-world locally and see output. CLAUDE.md exists at the repo root.
 **Note:** This verifies framework scaffolding only, not integration boundaries (DB, frontend↔backend, auth). Those are covered by the integration smoke test in [Chapter 07](guide/07-quality-gates.md).

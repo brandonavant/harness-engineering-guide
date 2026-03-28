@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+.venv/
+
+# Tool caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Harness data (ephemeral logs, never committed)
+data/
