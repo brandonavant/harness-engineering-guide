@@ -4,10 +4,10 @@
 
 | Field          | Value                             |
 |----------------|-----------------------------------|
-| Version        | v1.1                                                                  |
-| Date           | 2026-03-28                                                            |
-| Author         | Brandon Avant                                                         |
-| Change Summary | Update file placement and install script for source-file deployment model |
+| Version        | v1.2                                                                           |
+| Date           | 2026-03-28                                                                     |
+| Author         | Brandon Avant                                                                  |
+| Change Summary | Fix hook types: split Stop/SessionEnd, rename session_summary to turn_summary |
 
 ---
 
@@ -20,7 +20,7 @@ constraint, not a suggestion.
 |-------------------|----------------------|-------------------------------------------------------------------------|
 | Rules             | `.claude/rules/`     | One global rule; no path-scoped rules                                   |
 | Skills            | `.claude/skills/`    | `/case-study-capture`, `/case-study-synthesize`                         |
-| Hooks             | Claude Code hooks    | `PostToolUse`, `PostToolUseFailure`, `Stop`                             |
+| Hooks             | Claude Code hooks    | `PostToolUse`, `PostToolUseFailure`, `Stop`, `SessionEnd`               |
 | Git hook          | Native `post-commit` | Detects harness file changes in commits made outside Claude Code        |
 | Scripts           | Python 3             | Hook handlers that write JSONL entries; install script                  |
 | Data store        | JSONL files          | One file per event category, append-only                                |
@@ -34,8 +34,10 @@ Claude Code Session
 │   └── scripts/log_harness_change.py  ──▶  data/harness-changes.jsonl
 ├── PostToolUseFailure hook
 │   └── scripts/log_friction.py        ──▶  data/friction-events.jsonl
-├── Stop hook
-│   └── scripts/log_session_summary.py ──▶  data/session-summaries.jsonl
+├── Stop hook (fires after each Claude response)
+│   └── scripts/log_turn_summary.py    ──▶  data/turn-summaries.jsonl
+├── SessionEnd hook (fires when session terminates)
+│   └── scripts/log_session_end.py     ──▶  data/session-ends.jsonl
 ├── /case-study-capture skill
 │   └── (agent writes directly)        ──▶  data/manual-observations.jsonl
 └── /case-study-synthesize skill
@@ -94,7 +96,8 @@ case-study-harness/
 ├── scripts/
 │   ├── log_harness_change.py
 │   ├── log_friction.py
-│   ├── log_session_summary.py
+│   ├── log_turn_summary.py
+│   ├── log_session_end.py
 │   └── log_git_harness_change.py
 ├── hooks/
 │   └── post-commit                             ◀ symlink source
@@ -125,7 +128,8 @@ target-repo/
 │   ├── data/
 │   │   ├── harness-changes.jsonl
 │   │   ├── friction-events.jsonl
-│   │   ├── session-summaries.jsonl
+│   │   ├── turn-summaries.jsonl
+│   │   ├── session-ends.jsonl
 │   │   └── manual-observations.jsonl
 │   └── install.py
 ```
@@ -154,7 +158,7 @@ All JSONL entries share a common base structure. Each event category extends it.
 | Field        | Type   | Description                                                       |
 |--------------|--------|-------------------------------------------------------------------|
 | `timestamp`  | string | ISO 8601 UTC (e.g., `2026-03-27T19:30:00Z`)                       |
-| `event_type` | string | One of: `harness_change`, `friction`, `session_summary`, `manual` |
+| `event_type` | string | One of: `harness_change`, `friction`, `turn_summary`, `session_end`, `manual` |
 | `source`     | string | One of: `hook`, `git_hook`, `skill`                               |
 
 ### harness_change
@@ -175,13 +179,20 @@ All JSONL entries share a common base structure. Each event category extends it.
 | `error_summary` | string | Condensed error message       |
 | `context`       | string | What the agent was attempting |
 
-### session_summary
+### turn_summary
 
-| Field          | Type   | Description                                                         |
-|----------------|--------|---------------------------------------------------------------------|
-| `description`  | string | High-level summary of work performed                                |
-| `observations` | string | Harness-related observations from the session                       |
-| `token_usage`  | object | Nullable; `{"input": int, "output": int}` if available from session |
+| Field        | Type   | Description                                                |
+|--------------|--------|------------------------------------------------------------|
+| `session_id` | string | Links the turn to its session for correlation               |
+| `description`| string | High-level summary of what Claude responded (max 500 chars) |
+
+### session_end
+
+| Field         | Type   | Description                                                         |
+|---------------|--------|---------------------------------------------------------------------|
+| `session_id`  | string | The session that ended                                              |
+| `reason`      | string | Why the session ended (e.g., `prompt_input_exit`, `clear`, `logout`)|
+| `token_usage` | object | Nullable; `{"input": int, "output": int}` if available from session |
 
 ### manual
 
@@ -199,7 +210,8 @@ Observations are split into separate files by event category (one file per `even
 |-----------------------------|------------------------------------------------------|-------------------|
 | `harness-changes.jsonl`     | `log_harness_change.py`, `log_git_harness_change.py` | `harness_change`  |
 | `friction-events.jsonl`     | `log_friction.py`                                    | `friction`        |
-| `session-summaries.jsonl`   | `log_session_summary.py`                             | `session_summary` |
+| `turn-summaries.jsonl`      | `log_turn_summary.py`                                | `turn_summary`    |
+| `session-ends.jsonl`        | `log_session_end.py`                                 | `session_end`     |
 | `manual-observations.jsonl` | `/case-study-capture` skill                          | `manual`          |
 
 **Why separate files over one unified log:** Each file can be read independently during synthesis (e.g., "show me all
@@ -300,11 +312,14 @@ need to be standalone because hooks run outside the agent's reasoning -- skills 
 - **Symlinks must point to committed files.** The Git hook symlink target (`case-study-harness/hooks/post-commit`) must
   exist in the repo. A broken symlink is a silent no-op, which means harness changes go unlogged without warning.
 
-### AD-07: Session Summaries Include Token Usage When Available
+### AD-07: Two Hooks for Session-Level Data (Stop + SessionEnd)
 
-**Decision:** The `Stop` hook captures token usage (input/output counts) if the session exposes that data.
-**Reasoning:** Token usage is a meaningful efficiency signal. Tracking it per session can show whether harness
-improvements reduce token consumption over time -- not just wall-clock time, but cost.
+**Decision:** The `Stop` hook captures per-turn summaries (`last_assistant_message` after each Claude response). The
+`SessionEnd` hook captures session boundary events (when the session terminates). Token usage is recorded on the
+`session_end` entry (nullable until the hook exposes it).
+**Reasoning:** `Stop` fires after every Claude response — useful for logging what the agent did each turn, but not a
+session boundary. `SessionEnd` fires once when the session actually ends, providing the structural marker that synthesis
+needs to delineate sessions. Using both gives per-turn detail and session boundaries without losing information.
 
 ### AD-08: Synthesis Produces Generic Markdown in the Target Repo
 

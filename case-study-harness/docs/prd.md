@@ -4,10 +4,10 @@
 
 | Field          | Value                                   |
 |----------------|-----------------------------------------|
-| Version        | v1.1                                                                |
-| Date           | 2026-03-28                                                          |
-| Author         | Brandon Avant                                                       |
-| Change Summary | Expand F-06 to include rule, skill, and hook config deployment |
+| Version        | v1.2                                                                           |
+| Date           | 2026-03-28                                                                     |
+| Author         | Brandon Avant                                                                  |
+| Change Summary | Fix hook types: split Stop/SessionEnd, rename session_summary to turn_summary |
 
 ---
 
@@ -59,13 +59,14 @@ Hooks detect moments where the agent misunderstood, went off-track, needed corre
 - **AC-02:** Each friction entry includes: timestamp, event type, tool name, error summary, and surrounding context
   (what the agent was trying to do).
 
-### F-03: Session Summary Capture
+### F-03: Session and Turn Capture
 
-At the end of each session, the system captures a summary of what happened.
+The system captures per-turn context and session boundary events.
 
-- **AC-01:** A `Stop` hook fires when a session ends and writes a summary JSONL entry.
-- **AC-02:** The summary includes: timestamp, session duration estimate, high-level description of work performed, and
-  any harness-related observations from the session.
+- **AC-01:** A `Stop` hook fires after each Claude response and writes a `turn_summary` JSONL entry.
+- **AC-02:** Each turn summary includes: timestamp, session ID, and a description of what Claude responded.
+- **AC-03:** A `SessionEnd` hook fires when the session terminates and writes a `session_end` JSONL entry.
+- **AC-04:** The session end entry includes: timestamp, session ID, and the reason the session ended.
 
 ### F-04: Manual Observation Capture (`/case-study-capture`)
 

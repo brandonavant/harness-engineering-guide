@@ -89,3 +89,15 @@ def stop_payload() -> dict[str, Any]:
         "stop_hook_active": True,
         "last_assistant_message": "I've completed the refactoring of the authentication module.",
     }
+
+
+@pytest.fixture()
+def session_end_payload() -> dict[str, Any]:
+    """Return a SessionEnd hook payload."""
+    return {
+        "session_id": "test-session-123",
+        "transcript_path": "/tmp/transcript.jsonl",
+        "cwd": "/home/user/my-project",
+        "hook_event_name": "SessionEnd",
+        "reason": "prompt_input_exit",
+    }

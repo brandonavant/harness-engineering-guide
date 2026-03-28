@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Log session summaries detected by the Stop hook.
+"""Log per-turn summaries captured by the Stop hook.
 
-Reads hook JSON from stdin and appends a session_summary entry to
-data/session-summaries.jsonl.
+Reads hook JSON from stdin and appends a turn_summary entry to
+data/turn-summaries.jsonl. The Stop hook fires after each Claude
+response (turn), not at session end.
 """
 
 import json
@@ -13,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 DATA_DIR: Path = Path(__file__).resolve().parent.parent / "data"
-LOG_FILE: str = "session-summaries.jsonl"
+LOG_FILE: str = "turn-summaries.jsonl"
 
 MAX_LENGTH: int = 500
 
@@ -33,33 +34,34 @@ def truncate(text: str, max_length: int = MAX_LENGTH) -> str:
     return text[: max_length - 3] + "..."
 
 
-def build_entry(description: str) -> dict[str, Any]:
-    """Construct a session_summary JSONL entry.
+def build_entry(session_id: str, description: str) -> dict[str, Any]:
+    """Construct a turn_summary JSONL entry.
 
     Args:
-        description: High-level summary of work performed.
+        session_id: The session this turn belongs to.
+        description: High-level summary of what Claude responded.
 
     Returns:
         A dictionary ready for JSON serialization.
     """
     return {
         "timestamp": datetime.now(UTC).isoformat(),
-        "event_type": "session_summary",
+        "event_type": "turn_summary",
         "source": "hook",
+        "session_id": session_id,
         "description": description,
-        "observations": "",
-        "token_usage": None,
     }
 
 
 def main() -> None:
-    """Read Stop hook JSON from stdin and log a session summary."""
+    """Read Stop hook JSON from stdin and log a turn summary."""
     try:
         payload: dict[str, Any] = json.loads(sys.stdin.read())
 
+        session_id: str = payload.get("session_id", "")
         last_message: str = payload.get("last_assistant_message", "")
         description = truncate(last_message)
-        entry = build_entry(description)
+        entry = build_entry(session_id, description)
 
         os.makedirs(DATA_DIR, exist_ok=True)
         with open(DATA_DIR / LOG_FILE, "a") as f:

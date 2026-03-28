@@ -4,10 +4,10 @@
 
 | Field          | Value                                            |
 |----------------|--------------------------------------------------|
-| Version        | v1.1                                                                       |
-| Date           | 2026-03-28                                                                 |
-| Author         | Brandon Avant                                                              |
-| Change Summary | Update file paths for source-file deployment model; expand Phase 4 scope |
+| Version        | v1.2                                                                                |
+| Date           | 2026-03-28                                                                          |
+| Author         | Brandon Avant                                                                       |
+| Change Summary | Fix hook types: split Stop/SessionEnd, rename session_summary to turn_summary |
 
 ---
 
@@ -45,9 +45,11 @@ every script can be invoked from the command line and produces valid JSONL outpu
    `harness_change` entry to `data/harness-changes.jsonl`.
 4. Implement `scripts/log_friction.py` -- reads hook environment/arguments, appends one `friction` entry
    to `data/friction-events.jsonl`.
-5. Implement `scripts/log_session_summary.py` -- reads hook environment/arguments, appends one
-   `session_summary` entry to `data/session-summaries.jsonl`.
-6. Implement `scripts/log_git_harness_change.py` -- reads the most recent commit, checks for harness file
+5. Implement `scripts/log_turn_summary.py` -- reads Stop hook JSON from stdin, appends one
+   `turn_summary` entry to `data/turn-summaries.jsonl`. The Stop hook fires after each Claude response.
+6. Implement `scripts/log_session_end.py` -- reads SessionEnd hook JSON from stdin, appends one
+   `session_end` entry to `data/session-ends.jsonl`. The SessionEnd hook fires when a session terminates.
+7. Implement `scripts/log_git_harness_change.py` -- reads the most recent commit, checks for harness file
    changes, appends `harness_change` entries (with `commit_sha` and `commit_msg`) to
    `data/harness-changes.jsonl`.
 
@@ -60,8 +62,10 @@ every script can be invoked from the command line and produces valid JSONL outpu
 - [x] **P1-AC-03:** `log_harness_change.py` writes entries with `event_type: "harness_change"` and
   `source: "hook"`.
 - [x] **P1-AC-04:** `log_friction.py` writes entries with `event_type: "friction"` and `source: "hook"`.
-- [x] **P1-AC-05:** `log_session_summary.py` writes entries with `event_type: "session_summary"` and
-  `source: "hook"`. `token_usage` is `null` when not available.
+- [x] **P1-AC-05:** `log_turn_summary.py` writes entries with `event_type: "turn_summary"` and
+  `source: "hook"`, including `session_id`.
+- [x] **P1-AC-10:** `log_session_end.py` writes entries with `event_type: "session_end"` and
+  `source: "hook"`, including `session_id`, `reason`, and `token_usage` (null when not available).
 - [x] **P1-AC-06:** `log_git_harness_change.py` writes entries with `event_type: "harness_change"` and
   `source: "git_hook"`, including `commit_sha` and `commit_msg`.
 - [x] **P1-AC-07:** `log_git_harness_change.py` produces no output and exits cleanly when the commit
@@ -88,10 +92,12 @@ sessions and on Git commits.
 2. Define `PostToolUseFailure` hook entry in `case-study-harness/claude/hooks-config.json` that invokes
    `scripts/log_friction.py`.
 3. Define `Stop` hook entry in `case-study-harness/claude/hooks-config.json` that invokes
-   `scripts/log_session_summary.py`.
-4. Create `case-study-harness/hooks/post-commit` -- a thin wrapper that invokes
+   `scripts/log_turn_summary.py`.
+4. Define `SessionEnd` hook entry in `case-study-harness/claude/hooks-config.json` that invokes
+   `scripts/log_session_end.py`.
+5. Create `case-study-harness/hooks/post-commit` -- a thin wrapper that invokes
    `scripts/log_git_harness_change.py`. Must be executable.
-5. Create `case-study-harness/claude/rules/case-study-observer.md` -- global rule (no `paths:` frontmatter)
+6. Create `case-study-harness/claude/rules/case-study-observer.md` -- global rule (no `paths:` frontmatter)
    that makes the agent aware of the observation layer without altering build behavior.
 
 ### Acceptance Criteria
@@ -104,8 +110,10 @@ sessions and on Git commits.
   session produces a `harness_change` entry in `data/harness-changes.jsonl`.
 - [ ] **P2-AC-02:** A tool failure during a Claude Code session produces a `friction` entry in
   `data/friction-events.jsonl`.
-- [ ] **P2-AC-03:** Ending a Claude Code session produces a `session_summary` entry in
-  `data/session-summaries.jsonl`.
+- [ ] **P2-AC-03:** Ending a Claude Code session produces a `session_end` entry in
+  `data/session-ends.jsonl`.
+- [ ] **P2-AC-08:** Each Claude Code response produces a `turn_summary` entry in
+  `data/turn-summaries.jsonl`.
 - [ ] **P2-AC-04:** Committing a harness file change via Git (outside Claude Code) produces a
   `harness_change` entry with `source: "git_hook"` and a valid `commit_sha`.
 - [ ] **P2-AC-05:** Committing a non-harness file change via Git produces no log entry.
@@ -139,7 +147,7 @@ After this phase, the full observation + synthesis pipeline is operational.
 - [ ] **P3-AC-03:** The skill determines the `category` value -- the user does not need to specify or
   memorize category names.
 - [ ] **P3-AC-04:** `/case-study-synthesize` is invocable during a Claude Code session.
-- [ ] **P3-AC-05:** The synthesize skill reads all four JSONL log files.
+- [ ] **P3-AC-05:** The synthesize skill reads all five JSONL log files.
 - [ ] **P3-AC-06:** The synthesize skill produces a case study Markdown file citing specific log entries
   (by timestamp and event type) as evidence.
 - [ ] **P3-AC-07:** The synthesize skill produces a harness guide improvement plan Markdown file citing
