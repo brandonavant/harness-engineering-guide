@@ -37,19 +37,19 @@ observations as JSONL log entries:
   choice held up
 
 Most capture is automatic (via hooks that fire on tool use, session events, and harness file changes). Human overrides
-and subjective observations are captured via a manual `/capture` skill invoked within the context window where the
-event occurred. The system may also proactively ask for clarification when it detects ambiguous signals.
+and subjective observations are captured via a manual `/case-study-capture` skill invoked within the context window
+where the event occurred. The system may also proactively ask for clarification when it detects ambiguous signals.
 
-When the build is complete (or at any milestone), a `/synthesize` skill reads all captured data and drafts two
-deliverables: a case study and a harness guide improvement plan.
+When the build is complete (or at any milestone), a `/case-study-synthesize` skill reads all captured data and drafts
+two deliverables: a case study and a harness guide improvement plan.
 
 ## Tech Stack Decisions
 
 This is not an application -- it is a set of Claude Code harness mechanisms and supporting scripts:
 
 - **Rules** (`.claude/rules/`) -- a global rule that primes the agent to be observation-aware during sessions
-- **Skills** (`.claude/skills/`) -- `/capture` for manual observation logging; `/synthesize` for end-of-project
-  synthesis into case study and improvement plan
+- **Skills** (`.claude/skills/`) -- `/case-study-capture` for manual observation logging;
+  `/case-study-synthesize` for end-of-project synthesis into case study and improvement plan
 - **Hooks** -- `PostToolUse` hooks (matched on Edit/Write to harness file paths) for automatic change detection;
   `Stop` hooks for session-level summary capture; `PostToolUseFailure` for friction event detection
 - **Scripts** -- Python 3 scripts that hooks invoke to write structured JSONL log entries
