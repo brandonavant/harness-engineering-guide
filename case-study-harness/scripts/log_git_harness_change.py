@@ -64,7 +64,7 @@ def get_changed_files() -> list[tuple[str, str]]:
         if len(parts) < 2:
             continue
         status = parts[0][0]  # First char handles R100, C100, etc.
-        file_path = parts[-1]  # Last element handles renames (old\tnew)
+        file_path = parts[-1]  # Last element handles renames (old → new)
         changes.append((status, file_path))
     return changes
 
