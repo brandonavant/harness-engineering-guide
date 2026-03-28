@@ -3,3 +3,7 @@
 
 # Python
 __pycache__/
+.venv/
+
+# Case study harness data (ephemeral, never committed)
+case-study-harness/data/
