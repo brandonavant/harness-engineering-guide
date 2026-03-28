@@ -1,0 +1,53 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 case-study-harness/scripts/log_harness_change.py",
+            "timeout": 10,
+            "statusMessage": "Logging harness file change..."
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 case-study-harness/scripts/log_friction.py",
+            "timeout": 10,
+            "statusMessage": "Logging friction event..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 case-study-harness/scripts/log_turn_summary.py",
+            "timeout": 10,
+            "statusMessage": "Logging turn summary..."
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 case-study-harness/scripts/log_session_end.py",
+            "timeout": 10,
+            "statusMessage": "Logging session end..."
+          }
+        ]
+      }
+    ]
+  }
+}

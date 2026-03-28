@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Git post-commit hook: log harness file changes to case-study-harness data.
+# This hook is a thin wrapper around the Python logging script.
+# It must not block or fail the commit — all errors are silently ignored.
+
+# Resolve the real path of this script (follows symlinks, POSIX-compatible).
+SOURCE="$0"
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  # If readlink returns a relative path, resolve it relative to the symlink's directory.
+  [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
+HARNESS_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+python3 "$HARNESS_ROOT/scripts/log_git_harness_change.py" 2>/dev/null || true

@@ -2,11 +2,11 @@
 
 ## Document Header
 
-| Field          | Value                                            |
-|----------------|--------------------------------------------------|
-| Version        | v1.2                                                                                |
-| Date           | 2026-03-28                                                                          |
-| Author         | Brandon Avant                                                                       |
+| Field          | Value                                                                         |
+|----------------|-------------------------------------------------------------------------------|
+| Version        | v1.2                                                                          |
+| Date           | 2026-03-28                                                                    |
+| Author         | Brandon Avant                                                                 |
 | Change Summary | Fix hook types: split Stop/SessionEnd, rename session_summary to turn_summary |
 
 ---
@@ -159,8 +159,8 @@ After this phase, the full observation + synthesis pipeline is operational.
 
 ## Phase 4: Install Script
 
-**Goal:** Implement the install script that seeds the meta-harness into a target repository. After this
-phase, the full meta-harness can be deployed to any repo with a single command.
+**Goal:** Implement the `install` script that seeds the meta-harness into a target repository. After this phase, the
+full meta-harness can be deployed to any repo with a single command.
 
 **Delivers:** F-06 -- install mechanism is operational.
 
