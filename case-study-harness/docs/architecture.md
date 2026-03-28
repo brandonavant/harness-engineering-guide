@@ -2,11 +2,11 @@
 
 ## Document Header
 
-| Field          | Value                             |
-|----------------|-----------------------------------|
-| Version        | v1.2                                                                           |
-| Date           | 2026-03-28                                                                     |
-| Author         | Brandon Avant                                                                  |
+| Field          | Value                                                                         |
+|----------------|-------------------------------------------------------------------------------|
+| Version        | v1.2                                                                          |
+| Date           | 2026-03-28                                                                    |
+| Author         | Brandon Avant                                                                 |
 | Change Summary | Fix hook types: split Stop/SessionEnd, rename session_summary to turn_summary |
 
 ---
@@ -77,8 +77,8 @@ any external system. Sessions can be cleared or compacted without data loss (PRD
 The meta-harness must be clearly separable from the host repo's main harness (PRD N-04). The harness source code lives
 in the guide repo under `case-study-harness/`, but the guide repo has its own `.claude/` directory for guide authoring.
 To avoid activating case-study mechanisms in the wrong environment, rules, skills, and hook config are stored as
-**source files** under `case-study-harness/claude/` and deployed to a target repo's `.claude/` directory by the install
-script.
+**source files** under `case-study-harness/claude/` and deployed to a target repo's `.claude/` directory by the
+`install` script.
 
 ### Source layout (in the guide repo)
 
@@ -138,7 +138,7 @@ target-repo/
 
 - All scripts, source files, and data live under `case-study-harness/`. Removing this directory removes the bulk of the
   meta-harness.
-- The install script is the single entry point for deploying `.claude/` files into a target repo. It copies rules and
+- The `install` script is the single entry point for deploying `.claude/` files into a target repo. It copies rules and
   skills and merges hook definitions into `settings.json`.
 - Rules and skills use the `case-study-` prefix so they are visually and programmatically distinguishable from the host
   repo's own harness files.
@@ -155,11 +155,11 @@ All JSONL entries share a common base structure. Each event category extends it.
 
 ### Base Fields
 
-| Field        | Type   | Description                                                       |
-|--------------|--------|-------------------------------------------------------------------|
-| `timestamp`  | string | ISO 8601 UTC (e.g., `2026-03-27T19:30:00Z`)                       |
+| Field        | Type   | Description                                                                   |
+|--------------|--------|-------------------------------------------------------------------------------|
+| `timestamp`  | string | ISO 8601 UTC (e.g., `2026-03-27T19:30:00Z`)                                   |
 | `event_type` | string | One of: `harness_change`, `friction`, `turn_summary`, `session_end`, `manual` |
-| `source`     | string | One of: `hook`, `git_hook`, `skill`                               |
+| `source`     | string | One of: `hook`, `git_hook`, `skill`                                           |
 
 ### harness_change
 
@@ -181,18 +181,18 @@ All JSONL entries share a common base structure. Each event category extends it.
 
 ### turn_summary
 
-| Field        | Type   | Description                                                |
-|--------------|--------|------------------------------------------------------------|
-| `session_id` | string | Links the turn to its session for correlation               |
-| `description`| string | High-level summary of what Claude responded (max 500 chars) |
+| Field         | Type   | Description                                                 |
+|---------------|--------|-------------------------------------------------------------|
+| `session_id`  | string | Links the turn to its session for correlation               |
+| `description` | string | High-level summary of what Claude responded (max 500 chars) |
 
 ### session_end
 
-| Field         | Type   | Description                                                         |
-|---------------|--------|---------------------------------------------------------------------|
-| `session_id`  | string | The session that ended                                              |
-| `reason`      | string | Why the session ended (e.g., `prompt_input_exit`, `clear`, `logout`)|
-| `token_usage` | object | Nullable; `{"input": int, "output": int}` if available from session |
+| Field         | Type   | Description                                                          |
+|---------------|--------|----------------------------------------------------------------------|
+| `session_id`  | string | The session that ended                                               |
+| `reason`      | string | Why the session ended (e.g., `prompt_input_exit`, `clear`, `logout`) |
+| `token_usage` | object | Nullable; `{"input": int, "output": int}` if available from session  |
 
 ### manual
 
@@ -206,13 +206,13 @@ All JSONL entries share a common base structure. Each event category extends it.
 
 Observations are split into separate files by event category (one file per `event_type`):
 
-| File                        | Written by                                           | Event type        |
-|-----------------------------|------------------------------------------------------|-------------------|
-| `harness-changes.jsonl`     | `log_harness_change.py`, `log_git_harness_change.py` | `harness_change`  |
-| `friction-events.jsonl`     | `log_friction.py`                                    | `friction`        |
-| `turn-summaries.jsonl`      | `log_turn_summary.py`                                | `turn_summary`    |
-| `session-ends.jsonl`        | `log_session_end.py`                                 | `session_end`     |
-| `manual-observations.jsonl` | `/case-study-capture` skill                          | `manual`          |
+| File                        | Written by                                           | Event type       |
+|-----------------------------|------------------------------------------------------|------------------|
+| `harness-changes.jsonl`     | `log_harness_change.py`, `log_git_harness_change.py` | `harness_change` |
+| `friction-events.jsonl`     | `log_friction.py`                                    | `friction`       |
+| `turn-summaries.jsonl`      | `log_turn_summary.py`                                | `turn_summary`   |
+| `session-ends.jsonl`        | `log_session_end.py`                                 | `session_end`    |
+| `manual-observations.jsonl` | `/case-study-capture` skill                          | `manual`         |
 
 **Why separate files over one unified log:** Each file can be read independently during synthesis (e.g., "show me all
 friction events" is a single file read, not a filter across a large log). It also makes it obvious at a glance what
@@ -233,7 +233,8 @@ ordering across categories requires merging by timestamp, but synthesis is the o
    is missing, print a warning and exit without modifying the target repo (per AD-09).
 4. Copy `case-study-harness/claude/rules/` into `<target>/.claude/rules/`. If a file with the same name already exists,
    warn and skip that file.
-5. Copy `case-study-harness/claude/skills/case-study-capture/` and `case-study-harness/claude/skills/case-study-synthesize/`
+5. Copy `case-study-harness/claude/skills/case-study-capture/` and
+   `case-study-harness/claude/skills/case-study-synthesize/`
    into `<target>/.claude/skills/`. If a skill directory with the same name already exists, warn and skip it.
 6. Merge hook definitions from `case-study-harness/claude/hooks-config.json` into `<target>/.claude/settings.json`. This
    is an additive merge: read the existing file (or create a new one), add the case-study hook entries without removing
@@ -243,7 +244,8 @@ ordering across categories requires merging by timestamp, but synthesis is the o
 **Idempotency:** Running the script twice produces the same result. File copies skip files with identical content. Hook
 config merge skips entries already present. The Git hook symlink check is inherently idempotent.
 
-**Conflict handling:** The Git hook conflict is fatal -- the script exits without modifying the target repo (AD-09). Rule
+**Conflict handling:** The Git hook conflict is fatal -- the script exits without modifying the target repo (AD-09).
+Rule
 and skill conflicts are non-fatal -- the script warns and skips the conflicting file but continues with remaining
 actions. A single rule name collision should not prevent skill deployment.
 
@@ -341,8 +343,8 @@ means the file was already installed, and skipping it does not break the rest of
 ### AD-10: Source Files Stored Under `case-study-harness/claude/`, Not in Guide Repo `.claude/`
 
 **Decision:** Rules, skills, and hook configuration are stored as source files under `case-study-harness/claude/` rather
-than directly in the guide repo's `.claude/` directory. The install script copies them into the target repo's `.claude/`
-at setup time.
+than directly in the guide repo's `.claude/` directory. The `install` script copies them into the target repo's
+`.claude/` at setup time.
 **Reasoning:** The guide repo (`harness-engineering-guide`) has its own `.claude/` directory with rules, skills, and
 settings that govern guide authoring. Placing case-study-harness files directly in `.claude/` would activate them in the
 guide repo, which is not the target environment. The case-study-harness is designed to be deployed into a separate

@@ -2,11 +2,11 @@
 
 ## Document Header
 
-| Field          | Value                                   |
-|----------------|-----------------------------------------|
-| Version        | v1.2                                                                           |
-| Date           | 2026-03-28                                                                     |
-| Author         | Brandon Avant                                                                  |
+| Field          | Value                                                                         |
+|----------------|-------------------------------------------------------------------------------|
+| Version        | v1.2                                                                          |
+| Date           | 2026-03-28                                                                    |
+| Author         | Brandon Avant                                                                 |
 | Change Summary | Fix hook types: split Stop/SessionEnd, rename session_summary to turn_summary |
 
 ---
