@@ -150,12 +150,13 @@ The meta-harness produces two outputs at synthesis time:
 2. **Harness guide improvement plan** -- actionable changes to guide chapters based on issues encountered during
    the build.
 
-## 8. Open Questions
+## 8. Resolved Questions
 
-- **OQ-01:** Should JSONL logs use one unified file or separate files per event category? (Design decision for
-  architecture.)
-- **OQ-02:** Exact placement strategy for meta-harness files within the target repo -- how to keep them clearly
-  separable from the main harness. (Design decision for architecture.)
-- **OQ-03:** Should the `Stop` hook session summary include token/cost estimates if available, or just activity
-  descriptions?
-- **OQ-04:** Should `/synthesize` produce output as Markdown files, or write directly into the guide repo structure?
+All original open questions have been resolved in the architecture document:
+
+- **OQ-01:** Separate JSONL files per event category. See architecture AD-02.
+- **OQ-02:** All meta-harness files under `case-study-harness/` with `case-study-` prefixed rules/skills. See
+  architecture Section 3.
+- **OQ-03:** Session summaries include token usage when available. See architecture AD-07.
+- **OQ-04:** Synthesis produces generic Markdown in the target repo; engineer moves it to the guide repo manually. See
+  architecture AD-08.
