@@ -53,21 +53,21 @@ every script can be invoked from the command line and produces valid JSONL outpu
 
 ### Acceptance Criteria
 
-- [ ] **P1-AC-01:** Each script runs without error when invoked with valid arguments and produces a
+- [x] **P1-AC-01:** Each script runs without error when invoked with valid arguments and produces a
   single-line JSON object appended to the correct file.
-- [ ] **P1-AC-02:** Every JSONL entry contains the base fields (`timestamp`, `event_type`, `source`) plus
+- [x] **P1-AC-02:** Every JSONL entry contains the base fields (`timestamp`, `event_type`, `source`) plus
   the category-specific fields defined in the architecture data schema (Section 4).
-- [ ] **P1-AC-03:** `log_harness_change.py` writes entries with `event_type: "harness_change"` and
+- [x] **P1-AC-03:** `log_harness_change.py` writes entries with `event_type: "harness_change"` and
   `source: "hook"`.
-- [ ] **P1-AC-04:** `log_friction.py` writes entries with `event_type: "friction"` and `source: "hook"`.
-- [ ] **P1-AC-05:** `log_session_summary.py` writes entries with `event_type: "session_summary"` and
+- [x] **P1-AC-04:** `log_friction.py` writes entries with `event_type: "friction"` and `source: "hook"`.
+- [x] **P1-AC-05:** `log_session_summary.py` writes entries with `event_type: "session_summary"` and
   `source: "hook"`. `token_usage` is `null` when not available.
-- [ ] **P1-AC-06:** `log_git_harness_change.py` writes entries with `event_type: "harness_change"` and
+- [x] **P1-AC-06:** `log_git_harness_change.py` writes entries with `event_type: "harness_change"` and
   `source: "git_hook"`, including `commit_sha` and `commit_msg`.
-- [ ] **P1-AC-07:** `log_git_harness_change.py` produces no output and exits cleanly when the commit
+- [x] **P1-AC-07:** `log_git_harness_change.py` produces no output and exits cleanly when the commit
   contains no harness file changes.
-- [ ] **P1-AC-08:** `case-study-harness/data/` is gitignored.
-- [ ] **P1-AC-09:** All scripts use Python 3, `#!/usr/bin/env python3` shebangs, Google-style docstrings,
+- [x] **P1-AC-08:** `case-study-harness/data/` is gitignored.
+- [x] **P1-AC-09:** All scripts use Python 3, `#!/usr/bin/env python3` shebangs, Google-style docstrings,
   and type hints.
 
 ---
