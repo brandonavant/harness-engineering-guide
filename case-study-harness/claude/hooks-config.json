@@ -1,5 +1,17 @@
 {
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 case-study-harness/scripts/log_user_prompt.py",
+            "timeout": 10,
+            "statusMessage": "Logging user prompt..."
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
@@ -9,6 +21,16 @@
             "command": "python3 case-study-harness/scripts/log_harness_change.py",
             "timeout": 10,
             "statusMessage": "Logging harness file change..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 case-study-harness/scripts/log_tool_use.py",
+            "timeout": 10,
+            "statusMessage": "Logging tool use..."
           }
         ]
       }

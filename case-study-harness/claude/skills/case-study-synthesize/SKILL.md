@@ -43,11 +43,12 @@ Invoke the script to read, validate, merge, and summarize all observation data:
 python3 "${CLAUDE_SKILL_DIR}/scripts/read_observations.py"
 ```
 
-The script reads all five JSONL log files, merges entries chronologically, computes summary
+The script reads all seven JSONL log files, merges entries chronologically, computes summary
 statistics, and outputs a single JSON object to stdout with two keys:
 
 - `"summary"` -- statistics (entry counts by type, session count, date range, friction tool
-  breakdown, harness change file breakdown, manual observation category breakdown)
+  breakdown, harness change file breakdown, manual observation category breakdown, tool use
+  breakdown)
 - `"entries"` -- all entries merged and sorted by timestamp
 
 If the script reports errors or missing files, note which event types have no data but continue with
@@ -57,6 +58,12 @@ whatever data is available.
 
 Using the script's output, work through these analytical lenses:
 
+- **User intent trail:** What did the user ask for at each turn? How did requests evolve over the
+  course of the build? Were there corrections or pivots? Use `user_prompt` entries to reconstruct
+  the narrative arc of what the user was trying to accomplish.
+- **Tool usage patterns:** Which tools were used most frequently? What files were touched most
+  often? Look for Read-then-Edit chains that indicate exploration followed by action. Use
+  `tool_use` entries to understand the agent's working patterns.
 - **Harness evolution:** How did harness files (`.claude/`, `CLAUDE.md`) change over time? What was
   added, modified, or removed? Were changes concentrated early or spread throughout?
 - **Friction patterns:** What types of failures occurred? Were they clustered around specific tools,
@@ -100,11 +107,14 @@ Use the project name from the repository if identifiable; otherwise use a generi
 
 4. **What Worked** -- Successful patterns and effective harness decisions. Cite `manual` entries with
    category `successful_pattern` and any `harness_change` entries that correlate with reduced
-   friction. Each claim must reference at least one log entry.
+   friction. Use `user_prompt` entries to provide context for why a decision was made. Each claim
+   must reference at least one log entry.
 
 5. **What Failed and How It Was Addressed** -- Friction events, human overrides, and how they were
    resolved. Cite `friction` entries and `manual` entries with category `human_override` or
-   `friction`. Describe the failure, the resolution, and whether a harness change resulted.
+   `friction`. Use `user_prompt` and `tool_use` entries to reconstruct the sequence of events
+   leading to and resolving the failure. Describe the failure, the resolution, and whether a
+   harness change resulted.
 
 6. **Context Architecture Observations** -- How context was distributed across CLAUDE.md, rules,
    skills, and hooks. Cite `manual` entries with category `context_architecture` and relevant
