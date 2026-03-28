@@ -7,9 +7,10 @@ that sits alongside a project's main operational harness and observes how that h
 data about what works, what fails, and why -- mostly automatically, with an opt-in manual capture skill for ambiguous
 or noteworthy moments the automation can't detect.
 
-The problem it solves: the Harness Engineering Guide lacks a feedback loop. Engineers follow the guide, build software,
-and learn things that should improve the guide and produce case studies -- but there's no systematic way to capture that
-signal during the build. Without it, lessons evaporate across sessions and the guide can't improve from real-world use.
+The problem it solves: the Harness Engineering Guide (this repo) lacks a feedback loop. Engineers follow the guide,
+build software, and learn things that should improve the guide and produce case studies -- but there's no systematic way
+to capture that signal during the build. Without it, lessons evaporate across sessions and the guide can't improve from
+real-world use.
 
 ## Target Persona
 
@@ -52,6 +53,13 @@ This is not an application -- it is a set of Claude Code harness mechanisms and 
 - **Hooks** -- `PostToolUse` hooks (matched on Edit/Write to harness file paths) for automatic change detection;
   `Stop` hooks for session-level summary capture; `PostToolUseFailure` for friction event detection
 - **Scripts** -- Python 3 scripts that hooks invoke to write structured JSONL log entries
+- **Native Git hook** -- a `post-commit` hook that detects when harness files (`.claude/`, `CLAUDE.md`,
+  `settings.json`) were changed in a commit and logs the SHA, changed files, and commit message as a JSONL entry.
+  Covers harness changes made outside Claude Code sessions (e.g., manual editor tweaks). Note: the JSONL entry is
+  written after the commit, so it lands in a subsequent commit -- acceptable since log entries reference the source
+  SHA for traceability
+- **Install script** -- a single Python script that seeds the meta-harness into a target repo: symlinks the Git
+  hook, creates data directories, and prints confirmation. Keeps setup to one command
 - **Data store** -- JSONL files accumulating observations across sessions, designed for machine consumption
   (AI and/or deterministic Python scripts), not human reading
 
