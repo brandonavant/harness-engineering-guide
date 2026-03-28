@@ -4,10 +4,10 @@
 
 | Field          | Value                                   |
 |----------------|-----------------------------------------|
-| Version        | v1.0                                    |
-| Date           | 2026-03-27                              |
-| Author         | Brandon Avant                           |
-| Change Summary | Initial version, derived from interview |
+| Version        | v1.1                                                                |
+| Date           | 2026-03-28                                                          |
+| Author         | Brandon Avant                                                       |
+| Change Summary | Expand F-06 to include rule, skill, and hook config deployment |
 
 ---
 
@@ -101,6 +101,11 @@ A single Python script that seeds the meta-harness into a target repository.
 - **AC-03:** Creates required data directories for JSONL log storage.
 - **AC-04:** Prints a confirmation message listing what was set up.
 - **AC-05:** Total setup completes in under 2 minutes.
+- **AC-06:** Copies rules from `case-study-harness/claude/rules/` into the target repo's `.claude/rules/`.
+- **AC-07:** Copies skills from `case-study-harness/claude/skills/` into the target repo's `.claude/skills/`.
+- **AC-08:** Merges hook definitions from `case-study-harness/claude/hooks-config.json` into the target repo's
+  `.claude/settings.json` without removing existing entries.
+- **AC-09:** Warns and skips if a rule or skill with the same name already exists in the target.
 
 ### F-07: Observation-Aware Global Rule
 

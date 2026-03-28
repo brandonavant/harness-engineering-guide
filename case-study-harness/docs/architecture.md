@@ -4,10 +4,10 @@
 
 | Field          | Value                             |
 |----------------|-----------------------------------|
-| Version        | v1.0                              |
-| Date           | 2026-03-27                        |
-| Author         | Brandon Avant                     |
-| Change Summary | Initial version, derived from PRD |
+| Version        | v1.1                                                                  |
+| Date           | 2026-03-28                                                            |
+| Author         | Brandon Avant                                                         |
+| Change Summary | Update file placement and install script for source-file deployment model |
 
 ---
 
@@ -72,31 +72,56 @@ any external system. Sessions can be cleared or compacted without data loss (PRD
 
 ## 3. File Placement Strategy
 
-The meta-harness must be clearly separable from the host repo's main harness (PRD N-04). All meta-harness files live
-under a single `case-study-harness/` directory at the repo root, with two exceptions that must integrate into existing
-Claude Code structure:
+The meta-harness must be clearly separable from the host repo's main harness (PRD N-04). The harness source code lives
+in the guide repo under `case-study-harness/`, but the guide repo has its own `.claude/` directory for guide authoring.
+To avoid activating case-study mechanisms in the wrong environment, rules, skills, and hook config are stored as
+**source files** under `case-study-harness/claude/` and deployed to a target repo's `.claude/` directory by the install
+script.
+
+### Source layout (in the guide repo)
 
 ```
-target-repo/
-├── .claude/
+case-study-harness/
+├── claude/                                     ◀ source files for deployment (inert here)
 │   ├── rules/
-│   │   └── case-study-observer.md          ◀ global rule (prefixed to avoid collision)
+│   │   └── case-study-observer.md
 │   ├── skills/
 │   │   ├── case-study-capture/
 │   │   │   └── SKILL.md
 │   │   └── case-study-synthesize/
 │   │       └── SKILL.md
-│   └── settings.json                       ◀ hook definitions merged into existing file
+│   └── hooks-config.json                       ◀ hook entries to merge into settings.json
+├── scripts/
+│   ├── log_harness_change.py
+│   ├── log_friction.py
+│   ├── log_session_summary.py
+│   └── log_git_harness_change.py
+├── hooks/
+│   └── post-commit                             ◀ symlink source
+├── data/                                       ◀ gitignored; created by install script
+└── install.py
+```
+
+### Deployed layout (after install, in the target repo)
+
+```
+target-repo/
+├── .claude/
+│   ├── rules/
+│   │   └── case-study-observer.md              ◀ copied from source by install script
+│   ├── skills/
+│   │   ├── case-study-capture/
+│   │   │   └── SKILL.md                        ◀ copied from source by install script
+│   │   └── case-study-synthesize/
+│   │       └── SKILL.md                        ◀ copied from source by install script
+│   └── settings.json                           ◀ hook entries merged by install script
 ├── .git/hooks/
-│   └── post-commit                         ◀ symlink → case-study-harness/hooks/post-commit
+│   └── post-commit                             ◀ symlink → case-study-harness/hooks/post-commit
 ├── case-study-harness/
+│   ├── claude/                                 ◀ source files (remain here as reference)
 │   ├── scripts/
-│   │   ├── log_harness_change.py
-│   │   ├── log_friction.py
-│   │   ├── log_session_summary.py
-│   │   └── log_git_harness_change.py
 │   ├── hooks/
-│   │   └── post-commit                     ◀ symlink source
+│   │   └── post-commit                         ◀ symlink source
 │   ├── data/
 │   │   ├── harness-changes.jsonl
 │   │   ├── friction-events.jsonl
@@ -107,13 +132,18 @@ target-repo/
 
 **Separability rules:**
 
-- All scripts and data live under `case-study-harness/`. Removing this directory removes the bulk of the meta-harness.
+- All scripts, source files, and data live under `case-study-harness/`. Removing this directory removes the bulk of the
+  meta-harness.
+- The install script is the single entry point for deploying `.claude/` files into a target repo. It copies rules and
+  skills and merges hook definitions into `settings.json`.
 - Rules and skills use the `case-study-` prefix so they are visually and programmatically distinguishable from the host
   repo's own harness files.
 - Hook definitions in `settings.json` are additive. They can be identified by their script paths
   (`case-study-harness/scripts/`) and removed without affecting other hooks.
 - The Git hook symlink points into `case-study-harness/hooks/`. Removing the directory breaks the symlink, which Git
-  treats as a missing hook (no-op). Clean removal means deleting the symlink and the directory.
+  treats as a missing hook (no-op).
+- Full removal: delete the `case-study-` prefixed rules and skills from `.claude/`, remove the case-study hook entries
+  from `.claude/settings.json`, delete the `.git/hooks/post-commit` symlink, and delete `case-study-harness/`.
 
 ## 4. Data Schema
 
@@ -185,17 +215,32 @@ ordering across categories requires merging by timestamp, but synthesis is the o
 
 **Actions:**
 
-1. Create `case-study-harness/data/` in the target repo (if it does not exist).
-2. Symlink `.git/hooks/post-commit` → `case-study-harness/hooks/post-commit`. If any problem occurs (existing hook,
-   permission error, missing `.git/`), print a warning and exit without modifying the target repo.
-3. Print confirmation listing what was set up.
+1. Create `<target>/.claude/` directory if it does not exist.
+2. Create `case-study-harness/data/` in the target repo if it does not exist.
+3. Symlink `.git/hooks/post-commit` → `case-study-harness/hooks/post-commit`. If an existing hook is found or `.git/`
+   is missing, print a warning and exit without modifying the target repo (per AD-09).
+4. Copy `case-study-harness/claude/rules/` into `<target>/.claude/rules/`. If a file with the same name already exists,
+   warn and skip that file.
+5. Copy `case-study-harness/claude/skills/case-study-capture/` and `case-study-harness/claude/skills/case-study-synthesize/`
+   into `<target>/.claude/skills/`. If a skill directory with the same name already exists, warn and skip it.
+6. Merge hook definitions from `case-study-harness/claude/hooks-config.json` into `<target>/.claude/settings.json`. This
+   is an additive merge: read the existing file (or create a new one), add the case-study hook entries without removing
+   existing entries. Skip entries whose commands are already present.
+7. Print confirmation listing what was set up.
+
+**Idempotency:** Running the script twice produces the same result. File copies skip files with identical content. Hook
+config merge skips entries already present. The Git hook symlink check is inherently idempotent.
+
+**Conflict handling:** The Git hook conflict is fatal -- the script exits without modifying the target repo (AD-09). Rule
+and skill conflicts are non-fatal -- the script warns and skips the conflicting file but continues with remaining
+actions. A single rule name collision should not prevent skill deployment.
 
 **What it does NOT do:**
 
-- Copy rules, skills, or hook definitions. Those are committed to the repo and checked in alongside the rest of the
-  meta-harness. The `install` script only handles the Git hook symlink (which cannot be committed) and the data
-  directory
-  (which is gitignored).
+- Copy Python scripts. They are referenced by relative path from `case-study-harness/scripts/`, which is already in the
+  target repo alongside the rest of the harness.
+- Modify the target repo's `CLAUDE.md`.
+- Commit anything.
 
 ## 7. Architecture Decisions
 
@@ -269,9 +314,22 @@ not directly into the guide repo's `case-study/` structure.
 moves the output into the guide repo manually. This keeps the meta-harness self-contained and the target repo unaware
 of the guide's directory layout.
 
-### AD-09: Install Script Bails on Any Hook Conflict
+### AD-09: Install Script Bails on Git Hook Conflicts
 
-**Decision:** If the `install` script encounters an existing `post-commit` hook or any other problem, it prints a
-warning and exits without modifying the target repo. No chaining, no overwriting.
+**Decision:** If the `install` script encounters an existing `post-commit` hook, it prints a warning and exits without
+modifying the target repo. No chaining, no overwriting. Rule and skill file conflicts are handled differently: the
+script warns and skips the conflicting file but continues with remaining actions.
 **Reasoning:** Hook chaining is fragile and adds complexity for a scenario that is unlikely in practice. The engineer
-can resolve conflicts manually if they arise.
+can resolve conflicts manually if they arise. Rule and skill conflicts are less dangerous -- a name collision likely
+means the file was already installed, and skipping it does not break the rest of the deployment.
+
+### AD-10: Source Files Stored Under `case-study-harness/claude/`, Not in Guide Repo `.claude/`
+
+**Decision:** Rules, skills, and hook configuration are stored as source files under `case-study-harness/claude/` rather
+than directly in the guide repo's `.claude/` directory. The install script copies them into the target repo's `.claude/`
+at setup time.
+**Reasoning:** The guide repo (`harness-engineering-guide`) has its own `.claude/` directory with rules, skills, and
+settings that govern guide authoring. Placing case-study-harness files directly in `.claude/` would activate them in the
+guide repo, which is not the target environment. The case-study-harness is designed to be deployed into a separate
+application repo where the engineer is doing the actual build work. Storing source files under
+`case-study-harness/claude/` keeps them inert in the guide repo and deployable to any target.

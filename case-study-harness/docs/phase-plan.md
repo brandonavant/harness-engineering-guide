@@ -4,10 +4,10 @@
 
 | Field          | Value                                            |
 |----------------|--------------------------------------------------|
-| Version        | v1.0                                             |
-| Date           | 2026-03-27                                       |
-| Author         | Brandon Avant                                    |
-| Change Summary | Initial version, derived from PRD + architecture |
+| Version        | v1.1                                                                       |
+| Date           | 2026-03-28                                                                 |
+| Author         | Brandon Avant                                                              |
+| Change Summary | Update file paths for source-file deployment model; expand Phase 4 scope |
 
 ---
 
@@ -82,20 +82,26 @@ sessions and on Git commits.
 
 ### Work Items
 
-1. Define `PostToolUse` hook in the project's `.claude/settings.json` that fires on Edit/Write operations
-   targeting harness paths (`.claude/`, `CLAUDE.md`, `settings.json`) and invokes
+1. Define `PostToolUse` hook entry in `case-study-harness/claude/hooks-config.json` that fires on Edit/Write
+   operations targeting harness paths (`.claude/`, `CLAUDE.md`, `settings.json`) and invokes
    `scripts/log_harness_change.py`.
-2. Define `PostToolUseFailure` hook in `.claude/settings.json` that invokes `scripts/log_friction.py`.
-3. Define `Stop` hook in `.claude/settings.json` that invokes `scripts/log_session_summary.py`.
+2. Define `PostToolUseFailure` hook entry in `case-study-harness/claude/hooks-config.json` that invokes
+   `scripts/log_friction.py`.
+3. Define `Stop` hook entry in `case-study-harness/claude/hooks-config.json` that invokes
+   `scripts/log_session_summary.py`.
 4. Create `case-study-harness/hooks/post-commit` -- a thin wrapper that invokes
    `scripts/log_git_harness_change.py`. Must be executable.
-5. Create `.claude/rules/case-study-observer.md` -- global rule (no `paths:` frontmatter) that makes the
-   agent aware of the observation layer without altering build behavior.
+5. Create `case-study-harness/claude/rules/case-study-observer.md` -- global rule (no `paths:` frontmatter)
+   that makes the agent aware of the observation layer without altering build behavior.
 
 ### Acceptance Criteria
 
-- [ ] **P2-AC-01:** Editing a harness file (e.g., `.claude/rules/`) during a Claude Code session produces
-  a `harness_change` entry in `data/harness-changes.jsonl`.
+> **Testing note:** These criteria describe behavior after the source files are deployed to a target repo.
+> Verify by manually placing the files in a test repo's `.claude/` directory or by running the Phase 4
+> install script if it is available.
+
+- [ ] **P2-AC-01:** Editing a harness file (e.g., `.claude/rules/`) in the target repo during a Claude Code
+  session produces a `harness_change` entry in `data/harness-changes.jsonl`.
 - [ ] **P2-AC-02:** A tool failure during a Claude Code session produces a `friction` entry in
   `data/friction-events.jsonl`.
 - [ ] **P2-AC-03:** Ending a Claude Code session produces a `session_summary` entry in
@@ -118,12 +124,12 @@ After this phase, the full observation + synthesis pipeline is operational.
 
 ### Work Items
 
-1. Create `.claude/skills/case-study-capture/SKILL.md` -- the `/case-study-capture` skill that reads
-   conversation context, accepts a user description, classifies the event type, and writes a `manual`
-   entry to `data/manual-observations.jsonl`.
-2. Create `.claude/skills/case-study-synthesize/SKILL.md` -- the `/case-study-synthesize` skill that reads
-   all `data/*.jsonl` files, produces a case study draft and a harness guide improvement plan, writes both
-   to `case-study-harness/output/`.
+1. Create `case-study-harness/claude/skills/case-study-capture/SKILL.md` -- the `/case-study-capture` skill
+   that reads conversation context, accepts a user description, classifies the event type, and writes a
+   `manual` entry to `data/manual-observations.jsonl`.
+2. Create `case-study-harness/claude/skills/case-study-synthesize/SKILL.md` -- the `/case-study-synthesize`
+   skill that reads all `data/*.jsonl` files, produces a case study draft and a harness guide improvement
+   plan, writes both to `case-study-harness/output/`.
 
 ### Acceptance Criteria
 
@@ -152,11 +158,22 @@ phase, the full meta-harness can be deployed to any repo with a single command.
 
 ### Work Items
 
-1. Implement `case-study-harness/install.py` -- accepts a target repo path, creates the data directory,
-   symlinks the Git hook, and prints confirmation.
-2. Ensure idempotency: running the script twice produces the same result without errors.
-3. Ensure safe failure: if an existing `post-commit` hook or any other conflict is detected, print a
-   warning and exit without modifying the target repo.
+1. Implement `case-study-harness/install.py` -- accepts a target repo path and performs: (a) creates
+   `case-study-harness/data/` in the target repo, (b) symlinks `.git/hooks/post-commit` to
+   `case-study-harness/hooks/post-commit`, (c) copies `case-study-harness/claude/rules/` into
+   `<target>/.claude/rules/`, (d) copies `case-study-harness/claude/skills/case-study-capture/` and
+   `case-study-harness/claude/skills/case-study-synthesize/` into `<target>/.claude/skills/`, (e) merges
+   hook definitions from `case-study-harness/claude/hooks-config.json` into
+   `<target>/.claude/settings.json` (additive -- does not remove existing entries), (f) prints
+   confirmation listing what was set up.
+2. Ensure idempotency: running the script twice produces the same result without errors. File copies skip
+   files with identical content. Hook config merge skips entries already present.
+3. Ensure safe failure: if an existing `post-commit` hook is detected, print a warning and exit without
+   modifying the target repo. If a rule or skill with the same name already exists, warn and skip that
+   file but continue with remaining actions.
+4. Handle missing `<target>/.claude/` directory: create it if it does not exist. Handle missing
+   `<target>/.claude/settings.json`: create a minimal valid JSON file containing only the case-study hook
+   definitions.
 
 ### Acceptance Criteria
 
@@ -172,3 +189,15 @@ phase, the full meta-harness can be deployed to any repo with a single command.
 - [ ] **P4-AC-08:** The script uses Python 3, `#!/usr/bin/env python3` shebang, Google-style docstrings,
   and type hints.
 - [ ] **P4-AC-09:** Total setup completes in under 2 minutes.
+- [ ] **P4-AC-10:** Running the script copies `case-study-observer.md` into
+  `<target>/.claude/rules/`.
+- [ ] **P4-AC-11:** Running the script copies `case-study-capture/` and `case-study-synthesize/` skill
+  directories into `<target>/.claude/skills/`.
+- [ ] **P4-AC-12:** Running the script merges hook definitions from `hooks-config.json` into
+  `<target>/.claude/settings.json` without removing existing entries.
+- [ ] **P4-AC-13:** If `<target>/.claude/settings.json` does not exist, the script creates it with the
+  case-study hook definitions.
+- [ ] **P4-AC-14:** If a rule file or skill directory with the same name already exists in the target,
+  the script prints a warning and skips that file/directory.
+- [ ] **P4-AC-15:** After installation, starting a Claude Code session in the target repo loads the
+  case-study rule and skills.
