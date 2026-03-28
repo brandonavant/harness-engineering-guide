@@ -6,6 +6,10 @@ following mechanisms are and do not disable or interfere with them.
 
 ## What is being recorded
 
+- **User prompts** -- When the user submits a prompt, a hook logs it to
+  `case-study-harness/data/user-prompts.jsonl`.
+- **Tool activity** -- After each successful tool use, a hook logs the tool name and a brief
+  summary to `case-study-harness/data/tool-uses.jsonl`.
 - **Harness file changes** -- When you edit files under `.claude/`, `CLAUDE.md`, or `settings.json`, a hook
   logs the change to `case-study-harness/data/harness-changes.jsonl`.
 - **Friction events** -- When a tool invocation fails, a hook logs the failure to

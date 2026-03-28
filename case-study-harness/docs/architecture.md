@@ -4,10 +4,10 @@
 
 | Field          | Value                                                                         |
 |----------------|-------------------------------------------------------------------------------|
-| Version        | v1.2                                                                          |
+| Version        | v1.3                                                                          |
 | Date           | 2026-03-28                                                                    |
 | Author         | Brandon Avant                                                                 |
-| Change Summary | Fix hook types: split Stop/SessionEnd, rename session_summary to turn_summary |
+| Change Summary | Add UserPromptSubmit and general PostToolUse hooks; enrich turn_summary and friction schemas |
 
 ---
 
@@ -20,7 +20,7 @@ constraint, not a suggestion.
 |-------------------|----------------------|-------------------------------------------------------------------------|
 | Rules             | `.claude/rules/`     | One global rule; no path-scoped rules                                   |
 | Skills            | `.claude/skills/`    | `/case-study-capture`, `/case-study-synthesize`                         |
-| Hooks             | Claude Code hooks    | `PostToolUse`, `PostToolUseFailure`, `Stop`, `SessionEnd`               |
+| Hooks             | Claude Code hooks    | `UserPromptSubmit`, `PostToolUse`, `PostToolUseFailure`, `Stop`, `SessionEnd` |
 | Git hook          | Native `post-commit` | Detects harness file changes in commits made outside Claude Code        |
 | Scripts           | Python 3             | Hook handlers that write JSONL entries; install script                  |
 | Data store        | JSONL files          | One file per event category, append-only                                |
@@ -30,8 +30,12 @@ constraint, not a suggestion.
 
 ```
 Claude Code Session
+├── UserPromptSubmit hook (fires when user submits a prompt)
+│   └── scripts/log_user_prompt.py     ──▶  data/user-prompts.jsonl
 ├── PostToolUse hook (Edit/Write on harness paths)
 │   └── scripts/log_harness_change.py  ──▶  data/harness-changes.jsonl
+├── PostToolUse hook (all tools -- general activity trail)
+│   └── scripts/log_tool_use.py        ──▶  data/tool-uses.jsonl
 ├── PostToolUseFailure hook
 │   └── scripts/log_friction.py        ──▶  data/friction-events.jsonl
 ├── Stop hook (fires after each Claude response)
@@ -94,6 +98,8 @@ case-study-harness/
 │   │       └── SKILL.md
 │   └── hooks-config.json                       ◀ hook entries to merge into settings.json
 ├── scripts/
+│   ├── log_user_prompt.py
+│   ├── log_tool_use.py
 │   ├── log_harness_change.py
 │   ├── log_friction.py
 │   ├── log_turn_summary.py
@@ -126,6 +132,8 @@ target-repo/
 │   ├── hooks/
 │   │   └── post-commit                         ◀ symlink source
 │   ├── data/
+│   │   ├── user-prompts.jsonl
+│   │   ├── tool-uses.jsonl
 │   │   ├── harness-changes.jsonl
 │   │   ├── friction-events.jsonl
 │   │   ├── turn-summaries.jsonl
@@ -158,8 +166,23 @@ All JSONL entries share a common base structure. Each event category extends it.
 | Field        | Type   | Description                                                                   |
 |--------------|--------|-------------------------------------------------------------------------------|
 | `timestamp`  | string | ISO 8601 UTC (e.g., `2026-03-27T19:30:00Z`)                                   |
-| `event_type` | string | One of: `harness_change`, `friction`, `turn_summary`, `session_end`, `manual` |
+| `event_type` | string | One of: `user_prompt`, `tool_use`, `harness_change`, `friction`, `turn_summary`, `session_end`, `manual` |
 | `source`     | string | One of: `hook`, `git_hook`, `skill`                                           |
+
+### user_prompt
+
+| Field        | Type   | Description                                         |
+|--------------|--------|-----------------------------------------------------|
+| `session_id` | string | Links the prompt to its session for correlation     |
+| `prompt`     | string | The user's prompt text (max 2000 chars)             |
+
+### tool_use
+
+| Field          | Type   | Description                                         |
+|----------------|--------|-----------------------------------------------------|
+| `session_id`   | string | Links the tool use to its session for correlation   |
+| `tool_name`    | string | The Claude Code tool that was invoked               |
+| `tool_summary` | string | Brief description of what the tool did (max 200 chars) |
 
 ### harness_change
 
@@ -173,18 +196,20 @@ All JSONL entries share a common base structure. Each event category extends it.
 
 ### friction
 
-| Field           | Type   | Description                   |
-|-----------------|--------|-------------------------------|
-| `tool_name`     | string | The tool that failed          |
-| `error_summary` | string | Condensed error message       |
-| `context`       | string | What the agent was attempting |
+| Field           | Type   | Description                                       |
+|-----------------|--------|---------------------------------------------------|
+| `session_id`    | string | Links the friction event to its session            |
+| `tool_name`     | string | The tool that failed                               |
+| `error_summary` | string | Condensed error message                            |
+| `context`       | string | What the agent was attempting                      |
 
 ### turn_summary
 
-| Field         | Type   | Description                                                 |
-|---------------|--------|-------------------------------------------------------------|
-| `session_id`  | string | Links the turn to its session for correlation               |
-| `description` | string | High-level summary of what Claude responded (max 500 chars) |
+| Field              | Type    | Description                                                  |
+|--------------------|---------|--------------------------------------------------------------|
+| `session_id`       | string  | Links the turn to its session for correlation                |
+| `description`      | string  | High-level summary of what Claude responded (max 2000 chars) |
+| `stop_hook_active` | boolean | Whether the stop hook is active (mid-turn vs. complete)      |
 
 ### session_end
 
@@ -208,6 +233,8 @@ Observations are split into separate files by event category (one file per `even
 
 | File                        | Written by                                           | Event type       |
 |-----------------------------|------------------------------------------------------|------------------|
+| `user-prompts.jsonl`        | `log_user_prompt.py`                                 | `user_prompt`    |
+| `tool-uses.jsonl`           | `log_tool_use.py`                                    | `tool_use`       |
 | `harness-changes.jsonl`     | `log_harness_change.py`, `log_git_harness_change.py` | `harness_change` |
 | `friction-events.jsonl`     | `log_friction.py`                                    | `friction`       |
 | `turn-summaries.jsonl`      | `log_turn_summary.py`                                | `turn_summary`   |

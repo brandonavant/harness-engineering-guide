@@ -49,10 +49,13 @@ def extract_context(tool_input: dict[str, Any]) -> str:
     return truncate(json.dumps(tool_input, default=str))
 
 
-def build_entry(tool_name: str, error_summary: str, context: str) -> dict[str, Any]:
+def build_entry(
+    session_id: str, tool_name: str, error_summary: str, context: str
+) -> dict[str, Any]:
     """Construct a friction JSONL entry.
 
     Args:
+        session_id: The session this friction event belongs to.
         tool_name: The tool that failed.
         error_summary: Condensed error message.
         context: What the agent was attempting.
@@ -64,6 +67,7 @@ def build_entry(tool_name: str, error_summary: str, context: str) -> dict[str, A
         "timestamp": datetime.now(UTC).isoformat(),
         "event_type": "friction",
         "source": "hook",
+        "session_id": session_id,
         "tool_name": tool_name,
         "error_summary": error_summary,
         "context": context,
@@ -75,13 +79,14 @@ def main() -> None:
     try:
         payload: dict[str, Any] = json.loads(sys.stdin.read())
 
+        session_id: str = payload.get("session_id", "")
         tool_name: str = payload.get("tool_name", "unknown")
         error: str = payload.get("error", "")
         tool_input: dict[str, Any] = payload.get("tool_input", {})
 
         error_summary = truncate(error)
         context = extract_context(tool_input)
-        entry = build_entry(tool_name, error_summary, context)
+        entry = build_entry(session_id, tool_name, error_summary, context)
 
         os.makedirs(DATA_DIR, exist_ok=True)
         with open(DATA_DIR / LOG_FILE, "a") as f:

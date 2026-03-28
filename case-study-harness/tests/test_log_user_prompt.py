@@ -1,4 +1,4 @@
-"""Tests for log_turn_summary.py."""
+"""Tests for log_user_prompt.py."""
 
 import io
 import json
@@ -6,35 +6,48 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import log_turn_summary
+import log_user_prompt
 import pytest
 
 
 @pytest.fixture(autouse=True)
 def _patch_data_dir(monkeypatch: pytest.MonkeyPatch, data_dir: Path) -> None:
-    monkeypatch.setattr(log_turn_summary, "DATA_DIR", data_dir)
+    monkeypatch.setattr(log_user_prompt, "DATA_DIR", data_dir)
+
+
+@pytest.fixture()
+def user_prompt_submit_payload() -> dict[str, Any]:
+    """Return a UserPromptSubmit hook payload."""
+    return {
+        "session_id": "test-session-001",
+        "transcript_path": "/tmp/transcript.jsonl",
+        "cwd": "/home/user/my-project",
+        "permission_mode": "default",
+        "hook_event_name": "UserPromptSubmit",
+        "prompt": "Fix the authentication bug in the login handler",
+    }
 
 
 def _run_with_payload(monkeypatch: pytest.MonkeyPatch, payload: dict[str, Any]) -> None:
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(payload)))
-    log_turn_summary.main()
+    log_user_prompt.main()
 
 
 def _read_entries(data_dir: Path) -> list[dict[str, Any]]:
-    log_file = data_dir / log_turn_summary.LOG_FILE
+    log_file = data_dir / log_user_prompt.LOG_FILE
     if not log_file.exists():
         return []
     return [json.loads(line) for line in log_file.read_text().strip().splitlines()]
 
 
-class TestTurnSummaryEntry:
-    def test_produces_turn_summary_entry(
+class TestUserPromptEntry:
+    def test_produces_user_prompt_entry(
         self,
         monkeypatch: pytest.MonkeyPatch,
         data_dir: Path,
-        stop_payload: dict[str, Any],
+        user_prompt_submit_payload: dict[str, Any],
     ) -> None:
-        _run_with_payload(monkeypatch, stop_payload)
+        _run_with_payload(monkeypatch, user_prompt_submit_payload)
         entries = _read_entries(data_dir)
         assert len(entries) == 1
 
@@ -42,85 +55,61 @@ class TestTurnSummaryEntry:
         self,
         monkeypatch: pytest.MonkeyPatch,
         data_dir: Path,
-        stop_payload: dict[str, Any],
+        user_prompt_submit_payload: dict[str, Any],
     ) -> None:
-        _run_with_payload(monkeypatch, stop_payload)
+        _run_with_payload(monkeypatch, user_prompt_submit_payload)
         entry = _read_entries(data_dir)[0]
-        assert entry["event_type"] == "turn_summary"
+        assert entry["event_type"] == "user_prompt"
         assert entry["source"] == "hook"
         assert "timestamp" in entry
         assert "session_id" in entry
-        assert "description" in entry
+        assert "prompt" in entry
 
     def test_session_id_from_payload(
         self,
         monkeypatch: pytest.MonkeyPatch,
         data_dir: Path,
-        stop_payload: dict[str, Any],
+        user_prompt_submit_payload: dict[str, Any],
     ) -> None:
-        _run_with_payload(monkeypatch, stop_payload)
+        _run_with_payload(monkeypatch, user_prompt_submit_payload)
         entry = _read_entries(data_dir)[0]
         assert entry["session_id"] == "test-session-001"
 
-    def test_description_from_last_message(
+    def test_prompt_from_payload(
         self,
         monkeypatch: pytest.MonkeyPatch,
         data_dir: Path,
-        stop_payload: dict[str, Any],
+        user_prompt_submit_payload: dict[str, Any],
     ) -> None:
-        _run_with_payload(monkeypatch, stop_payload)
+        _run_with_payload(monkeypatch, user_prompt_submit_payload)
         entry = _read_entries(data_dir)[0]
-        assert entry["description"] == "I've completed the refactoring of the authentication module."
+        assert entry["prompt"] == "Fix the authentication bug in the login handler"
 
-    def test_description_truncated(
+    def test_prompt_truncated_at_2000(
         self,
         monkeypatch: pytest.MonkeyPatch,
         data_dir: Path,
-        stop_payload: dict[str, Any],
+        user_prompt_submit_payload: dict[str, Any],
     ) -> None:
-        stop_payload["last_assistant_message"] = "x" * 2500
-        _run_with_payload(monkeypatch, stop_payload)
+        user_prompt_submit_payload["prompt"] = "x" * 2500
+        _run_with_payload(monkeypatch, user_prompt_submit_payload)
         entry = _read_entries(data_dir)[0]
-        assert len(entry["description"]) == 2000
-        assert entry["description"].endswith("...")
+        assert len(entry["prompt"]) == 2000
+        assert entry["prompt"].endswith("...")
 
-    def test_missing_last_message_uses_empty(
+    def test_missing_prompt_uses_empty(
         self,
         monkeypatch: pytest.MonkeyPatch,
         data_dir: Path,
     ) -> None:
         payload: dict[str, Any] = {
             "session_id": "test",
-            "hook_event_name": "Stop",
+            "hook_event_name": "UserPromptSubmit",
         }
         _run_with_payload(monkeypatch, payload)
         entries = _read_entries(data_dir)
         assert len(entries) == 1
-        assert entries[0]["description"] == ""
-
-    def test_stop_hook_active_captured(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        data_dir: Path,
-        stop_payload: dict[str, Any],
-    ) -> None:
-        _run_with_payload(monkeypatch, stop_payload)
-        entry = _read_entries(data_dir)[0]
-        assert entry["stop_hook_active"] is True
-
-    def test_stop_hook_active_defaults_to_false(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        data_dir: Path,
-    ) -> None:
-        payload: dict[str, Any] = {
-            "session_id": "test",
-            "hook_event_name": "Stop",
-            "last_assistant_message": "done",
-        }
-        _run_with_payload(monkeypatch, payload)
-        entry = _read_entries(data_dir)[0]
-        assert entry["stop_hook_active"] is False
+        assert entries[0]["prompt"] == ""
 
     def test_malformed_json_exits_silently(
         self,
@@ -128,6 +117,6 @@ class TestTurnSummaryEntry:
         data_dir: Path,
     ) -> None:
         monkeypatch.setattr(sys, "stdin", io.StringIO("invalid"))
-        log_turn_summary.main()
+        log_user_prompt.main()
         entries = _read_entries(data_dir)
         assert len(entries) == 0

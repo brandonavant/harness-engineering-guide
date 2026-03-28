@@ -78,9 +78,20 @@ class TestFrictionEntry:
         assert entry["event_type"] == "friction"
         assert entry["source"] == "hook"
         assert "timestamp" in entry
+        assert "session_id" in entry
         assert "tool_name" in entry
         assert "error_summary" in entry
         assert "context" in entry
+
+    def test_session_id_from_payload(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        data_dir: Path,
+        post_tool_use_failure_payload: dict[str, Any],
+    ) -> None:
+        _run_with_payload(monkeypatch, post_tool_use_failure_payload)
+        entry = _read_entries(data_dir)[0]
+        assert entry["session_id"] == "test-session-001"
 
     def test_tool_name_captured(
         self,

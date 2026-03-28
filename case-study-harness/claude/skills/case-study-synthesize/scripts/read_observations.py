@@ -25,6 +25,8 @@ LOG_FILES: dict[str, str] = {
     "turn-summaries.jsonl": "turn_summary",
     "session-ends.jsonl": "session_end",
     "manual-observations.jsonl": "manual",
+    "user-prompts.jsonl": "user_prompt",
+    "tool-uses.jsonl": "tool_use",
 }
 
 DEFAULT_DATA_DIR: Path = Path(__file__).resolve().parent.parent.parent.parent.parent / "data"
@@ -93,6 +95,7 @@ def compute_summary(entries: list[dict[str, Any]]) -> dict[str, Any]:
     by_manual_category: Counter[str] = Counter()
     friction_by_tool: Counter[str] = Counter()
     harness_change_by_file: Counter[str] = Counter()
+    tool_use_by_tool: Counter[str] = Counter()
     session_ids: set[str] = set()
 
     for entry in entries:
@@ -111,10 +114,13 @@ def compute_summary(entries: list[dict[str, Any]]) -> dict[str, Any]:
             file_path = entry.get("file_path", "unknown")
             harness_change_by_file[file_path] += 1
 
-        if event_type in ("session_end", "turn_summary"):
-            sid = entry.get("session_id")
-            if sid:
-                session_ids.add(sid)
+        if event_type == "tool_use":
+            tool = entry.get("tool_name", "unknown")
+            tool_use_by_tool[tool] += 1
+
+        sid = entry.get("session_id")
+        if sid:
+            session_ids.add(sid)
 
     timestamps = [e.get("timestamp", "") for e in entries if e.get("timestamp")]
     date_range: dict[str, str | None] = {
@@ -130,6 +136,7 @@ def compute_summary(entries: list[dict[str, Any]]) -> dict[str, Any]:
         "date_range": date_range,
         "friction_by_tool": dict(friction_by_tool.most_common()),
         "harness_change_by_file": dict(harness_change_by_file.most_common()),
+        "tool_use_by_tool": dict(tool_use_by_tool.most_common()),
     }
 
 
