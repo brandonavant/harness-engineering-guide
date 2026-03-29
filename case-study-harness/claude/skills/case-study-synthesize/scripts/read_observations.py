@@ -10,7 +10,7 @@ Usage:
 
 Args:
     --data-dir: Optional path to the data directory. Defaults to
-        ``case-study-harness/data/`` relative to this script's location.
+        ``case-study-harness/data/`` relative to the project root.
 """
 
 import json
@@ -29,7 +29,11 @@ LOG_FILES: dict[str, str] = {
     "tool-uses.jsonl": "tool_use",
 }
 
-DEFAULT_DATA_DIR: Path = Path(__file__).resolve().parent.parent.parent.parent.parent / "data"
+DEFAULT_DATA_DIR: Path = (
+    Path(__file__).resolve().parent.parent.parent.parent.parent
+    / "case-study-harness"
+    / "data"
+)
 
 
 def parse_args() -> Path:
