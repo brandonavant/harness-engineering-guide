@@ -32,7 +32,11 @@ VALID_CATEGORIES: frozenset[str] = frozenset(
     }
 )
 
-DATA_DIR: Path = Path(__file__).resolve().parent.parent.parent.parent.parent / "data"
+DATA_DIR: Path = (
+    Path(__file__).resolve().parent.parent.parent.parent.parent
+    / "case-study-harness"
+    / "data"
+)
 LOG_FILE: str = "manual-observations.jsonl"
 
 
